@@ -1,0 +1,52 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches:
+      - main # Specify the branch you want to track, e.g., 'main'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Remove Target Directory Contents Except .env
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            find /root/mood2makan/server/ -mindepth 1 ! -name ".env" -exec rm -rf {} +'
+
+      - name: Copy directory to server
+        run: |
+          scp -r ./backend ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/root/mood2makan
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Copy docker-compose to server
+        run: |
+          scp -r ./docker-compose.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/root/mood2makan
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+
+      - name: Run Docker Compose to Rebuild and Restart
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
+            cd /root/mood2makan &&
+            docker compose down &&
+            docker compose up -d --build'
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}

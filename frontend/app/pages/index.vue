@@ -1,0 +1,124 @@
+<template>
+  <div>
+    <!-- Hero Section -->
+    <section class="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      <OrganicShape color="leaf" size="xl" class="top-20 -left-20 opacity-30" />
+      <OrganicShape color="clay" size="xl" class="bottom-20 -right-20 opacity-30 delay-1000" />
+      
+      <div class="text-center z-10 max-w-4xl mx-auto px-6">
+        <h1 class="text-6xl md:text-8xl font-serif font-bold mb-6 text-nature-900 leading-tight animate-fade-in-up">
+          Rasa Alam Asli <br />
+          <span class="text-leaf-600 italic">Bikin Nagih</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-nature-600 mb-10 max-w-2xl mx-auto animate-fade-in-up delay-200">
+          Rasain sensasi kuliner lokal yang otentik. Dari alam, dimasak pake hati.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
+          <NuxtLink to="/explore" class="px-8 py-4 bg-nature-800 text-nature-50 rounded-full font-medium hover:bg-nature-700 transition-all hover:scale-105 shadow-lg">
+            Mulai Jelajah
+          </NuxtLink>
+          <NuxtLink to="/auth/login/umkm" class="px-8 py-4 bg-white text-nature-800 border border-nature-200 rounded-full font-medium hover:bg-nature-50 transition-all hover:scale-105 shadow-sm">
+            Gabung Jadi Mitra
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Categories (Bento Grid) -->
+    <section class="py-20 px-6 bg-white/50 backdrop-blur-sm">
+      <div class="max-w-7xl mx-auto">
+        <div class="mb-12 text-center">
+          <h2 class="text-4xl font-serif font-bold mb-4 text-nature-800">Pilihan Mantap</h2>
+          <p class="text-nature-600">Cari spot-spot keren di berbagai kategori.</p>
+        </div>
+
+        <BentoGrid>
+          <BentoItem 
+            title="Jajanan Jadul" 
+            description="Resep turun-temurun yang bikin kangen."
+            span="2x2"
+            theme="colored"
+            image="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+            action="Cek Jajanan"
+          />
+          <BentoItem 
+            title="Jagoan Kaki Lima" 
+            description="Rasa bintang lima, harga kaki lima."
+            span="1x1"
+            theme="light"
+            icon="🍜"
+          />
+          <BentoItem 
+            title="Manis-Manis" 
+            description="Dessert kece buat naikin mood kamu."
+            span="1x2"
+            theme="dark"
+            action="Lihat Dessert"
+          />
+          <BentoItem 
+            title="Menu Sehat" 
+            description="Makan enak tetep sehat, gas!"
+            span="1x1"
+            theme="light"
+            icon="🥗"
+          />
+          <BentoItem 
+            title="Ngopi Santuy" 
+            description="Tempat asik buat ngopi dan nongkrong."
+            span="2x1"
+            theme="colored"
+            action="Cari Kafe"
+          />
+        </BentoGrid>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-24 px-6 relative overflow-hidden">
+      <div class="absolute inset-0 bg-nature-800 skew-y-3 transform origin-bottom-right scale-110"></div>
+      <div class="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 text-nature-50">
+        <div class="md:w-1/2">
+          <h2 class="text-4xl md:text-5xl font-serif font-bold mb-6">Siap buat goyang lidah?</h2>
+          <p class="text-lg opacity-90 mb-8">
+            Gabung sama ribuan pecinta kuliner yang udah nemu tempat favorit baru di Mood2Makan.
+          </p>
+          <NuxtLink to="/auth/login/client" class="inline-block px-8 py-4 bg-leaf-500 text-white rounded-full font-medium hover:bg-leaf-600 transition-colors shadow-lg">
+            Bikin Akun Gratis
+          </NuxtLink>
+        </div>
+        <div class="md:w-1/2 flex justify-center">
+           <OrganicShape color="sand" size="lg" variant="2" class="opacity-80" />
+        </div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<script setup lang="ts">
+definePageMeta({
+  layout: 'default'
+})
+</script>
+
+<style scoped>
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
