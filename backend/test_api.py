@@ -1,0 +1,573 @@
+"""
+Comprehensive API Testing Script for Backend
+With detailed request/response logging
+
+Run with: uv run python test_api.py
+"""
+
+import requests
+import json
+from typing import Optional
+
+# Configuration
+BASE_URL = "http://localhost:8000/api/v1"
+
+
+# Global token storage
+auth_token: Optional[str] = None
+
+
+def print_section(title: str):
+    """Print a formatted section header"""
+    print("\n" + "=" * 80)
+    print(f"  {title}")
+    print("=" * 80)
+
+
+def print_request(method: str, url: str, data=None, headers=None):
+    """Print HTTP request details"""
+    print(f"\n📤 REQUEST: {method} {url}")
+    if headers:
+        safe_headers = {k: (v[:20] + '...' if len(str(v)) > 20 else v) for k, v in headers.items()}
+        print(f"   Headers: {json.dumps(safe_headers, indent=11)}")
+    if data:
+        print(f"   Body: {json.dumps(data, indent=9)}")
+
+
+def print_response(response):
+    """Print HTTP response details"""
+    print(f"\n📥 RESPONSE: {response.status_code} {response.reason}")
+    try:
+        response_json = response.json()
+        response_str = json.dumps(response_json, indent=9)
+        if len(response_str) > 1500:
+            response_str = response_str[:1500] + "\n         ... (truncated)"
+        print(f"   Body: {response_str}")
+    except:
+        text = response.text[:500]
+        if len(response.text) > 500:
+            text += "... (truncated)"
+        print(f"   Body: {text}")
+
+
+def print_result(test_name: str, success: bool):
+    """Print test result"""
+    status = "✅ PASS" if success else "❌ FAIL"
+    print(f"\n{status} - {test_name}")
+
+
+def get_headers():
+    """Get authorization headers"""
+    if auth_token:
+        return {"Authorization": f"Bearer {auth_token}"}
+    return {}
+
+
+# ========== AUTHENTICATION AND USERS TESTS ==========
+
+def test_auth_and_user():
+    global auth_token
+    print_section("USER ENDPOINT TESTS")
+
+    # ===============================
+    # 1. Register User
+    # ===============================
+    register_data_1 = {
+        "email": "admin@gmail.com",
+        "password": "admin1",
+        "full_name": "admin123",
+        "role": "admin"
+    }
+    register_data_2 = {
+        "email": "client@gmail.com",
+        "password": "client1",
+        "full_name": "client123"
+    }
+    register_data_3 = {
+        "email": "umkm@gmail.com",
+        "password": "umkm1",
+        "full_name": "umkm123",
+        "role": "umkm"
+    }
+
+    url = f"{BASE_URL}/users"
+    print_request("POST", url, data=register_data_1)
+    response = requests.post(url, json=register_data_1)
+    print_response(response)
+    print_result("Register User 1", response.status_code in [200, 201, 400])
+    
+    url = f"{BASE_URL}/users"
+    print_request("POST", url, data=register_data_2)
+    response = requests.post(url, json=register_data_2)
+    print_response(response)
+    print_result("Register User 2", response.status_code in [200, 201, 400])
+    
+    url = f"{BASE_URL}/users"
+    print_request("POST", url, data=register_data_3)
+    response = requests.post(url, json=register_data_3)
+    print_response(response)
+    print_result("Register User 3", response.status_code in [200, 201, 400])
+
+    # ===============================
+    # 2. Login User
+    # ===============================
+    login_data = {
+        "username": "client@gmail.com",
+        "password": "client",
+    }
+
+    url = f"{BASE_URL}/auth/login"
+    print_request("POST", url, data=login_data)
+    response = requests.post(url, data=login_data)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Login User 1 Wrong Email", success)
+
+    if not success:
+        print("❌ Login failed. Stopping tests.")
+    else:
+        auth_token = response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        print(f"  🔑 Token obtained: {auth_token[:30]}...")
+    
+    login_data = {
+        "username": "oo@gmail.com",
+        "password": "admin",
+    }
+
+    url = f"{BASE_URL}/auth/login"
+    print_request("POST", url, data=login_data)
+    response = requests.post(url, data=login_data)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Login User 1 Wrong Password", success)
+
+    if not success:
+        print("❌ Login failed. Stopping tests.")
+    else:
+        auth_token = response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        print(f"  🔑 Token obtained: {auth_token[:30]}...")
+    
+    login_data = {
+        "username": "client@gmail.com",
+        "password": "client1",
+    }
+
+    url = f"{BASE_URL}/auth/login"
+    print_request("POST", url, data=login_data)
+    response = requests.post(url, data=login_data)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Login User 1 Correct Email and Password", success)
+
+    if not success:
+        print("❌ Login failed. Stopping tests.")
+        return
+    else:
+        auth_token = response.json()["access_token"]
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        print(f"  🔑 Token obtained: {auth_token[:30]}...")
+
+    # ===============================
+    # 3. GET /users/me
+    # ===============================
+    url = f"{BASE_URL}/users/me"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    print_result("Get Current User", response.status_code == 200)
+
+    # ===============================
+    # 4. Update User (PUT /users/me)
+    # ===============================
+    update_data = {
+        "full_name": "client123",
+        "password": "client",
+        "image_url": "https://dummyimage.com/user.png",
+    }
+
+    url = f"{BASE_URL}/users/me"
+    print_request("PUT", url, data=update_data)
+    response = requests.put(url, json=update_data, headers=headers)
+    print_response(response)
+    print_result("Update User", response.status_code == 200)
+
+    # ===============================
+    # 5. Upload User Image (PUT /users/me/image)
+    # ===============================
+    url = f"{BASE_URL}/users/me/image"
+    mock_file = ("test.png", b"fake image bytes", "image/png")
+
+    print_request("PUT", url, data="(binary image file)")
+    response = requests.put(
+        url,
+        files={"file": mock_file},
+        headers=headers,
+    )
+    print_response(response)
+    print_result("Upload User Image", response.status_code == 200)
+
+# ========== STORE API TEST ==========
+
+def test_store_full_flow():
+    print_section("FULL STORE API TESTS")
+
+    # -----------------------------------------------------
+    # LOGIN CLIENT
+    # -----------------------------------------------------
+    login_client = {
+        "username": "client@gmail.com",
+        "password": "client"
+    }
+    url = f"{BASE_URL}/auth/login"
+    response = requests.post(url, data=login_client)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Login User Client", success)
+
+    if not success:
+        print("❌ Login failed. Stopping tests.")
+        return
+    else:
+        auth_token = response.json()["access_token"]
+        client_headers = {"Authorization": f"Bearer {auth_token}"}
+        print(f"  🔑 Token obtained: {auth_token[:30]}...")
+
+    # -----------------------------------------------------
+    # CLIENT CREATE STORE 
+    # -----------------------------------------------------
+    store_client = {
+        "name": "Client Store",
+        "description": "Client-made store",
+        "province": "DKI Jakarta",
+        "city": "Jakarta Selatan",
+        "address": "Client Road 22"
+    }
+
+    url = f"{BASE_URL}/stores"
+    print_request("POST", url, data=store_client)
+    response = requests.post(url, json=store_client, headers=client_headers)
+    print_response(response)
+    success = response.status_code < 300
+    print_result("Client Creates Store", success)
+    
+    if not success:
+        print("❌ Add store by client failed. Stopping tests.")
+    else:
+        store_client_id = response.json().get("id")
+        print(f"Store ID: {store_client_id}")
+
+    # -----------------------------------------------------
+    # LOGIN UMKM
+    # -----------------------------------------------------
+    login_umkm = {
+        "username": "umkm@gmail.com",
+        "password": "umkm1"
+    }
+    url = f"{BASE_URL}/auth/login"
+    response = requests.post(url, data=login_umkm)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Login User UMKM", success)
+
+    if not success:
+        print("❌ Login failed. Stopping tests.")
+        return
+    else:
+        auth_token = response.json()["access_token"]
+        umkm_headers = {"Authorization": f"Bearer {auth_token}"}
+        print(f"  🔑 Token obtained: {auth_token[:30]}...")
+
+    # -----------------------------------------------------
+    # UMKM CREATE STORE 
+    # -----------------------------------------------------
+    store_umkm = {
+        "name": "UMKM Store",
+        "description": "UMKM-made store",
+        "province": "DKI Jakarta",
+        "city": "Jakarta Selatan",
+        "address": "Client Road 20"
+    }
+
+    url = f"{BASE_URL}/stores"
+    print_request("POST", url, data=store_umkm)
+    response = requests.post(url, json=store_umkm, headers=umkm_headers)
+    print_response(response)
+    success = response.status_code < 300
+    print_result("UMKM Creates Store", success)
+    
+    if not success:
+        print("❌ Add store by client failed. Stopping tests.")
+    else:
+        store_umkm_id = response.json().get("id")
+        print(f"Store ID: {store_umkm_id}")
+
+    # -----------------------------------------------------
+    # 1) GET ALL STORES
+    # -----------------------------------------------------
+    url = f"{BASE_URL}/stores"
+    print_request("GET", url)
+    resp = requests.get(url)
+    print_response(resp)
+    print_result("Get All Stores", resp.status_code == 200)
+
+    # -----------------------------------------------------
+    # 2) GET STORE DETAIL
+    # -----------------------------------------------------
+    url = f"{BASE_URL}/stores/{store_umkm_id}"
+    print_request("GET", url)
+    resp = requests.get(url)
+    print_response(resp)
+    print_result("Get Store Detail", resp.status_code == 200)
+
+    # -----------------------------------------------------
+    # 3) UPDATE STORE
+    # -----------------------------------------------------
+    update_payload = {
+        "name": "UMKM Store Updated",
+        "description": "Updated description",
+        "address": "Updated Street 99"
+    }
+
+    url = f"{BASE_URL}/stores/{store_umkm_id}"
+    print_request("PUT", url, data=update_payload)
+    resp = requests.put(url, json=update_payload, headers=umkm_headers)
+    print_response(resp)
+    print_result("Update Store", resp.status_code == 200)
+
+    # -----------------------------------------------------
+    # 4) DELETE STORE
+    # -----------------------------------------------------
+    url = f"{BASE_URL}/stores/{store_client_id}"
+    print_request("DELETE", url)
+    resp = requests.delete(url, headers=client_headers)
+    print_response(resp)
+    print_result("Delete Store", resp.status_code in [200, 204])
+    
+    # -----------------------------------------------------
+    # 5) UPLOAD IMAGE
+    # -----------------------------------------------------
+    url = f"{BASE_URL}/stores/{store_umkm_id}/image"
+
+    # Pakai binary fake image (tidak butuh file asli)
+    fake_image_content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
+
+    files = {
+        "file": ("test.png", fake_image_content, "image/png")
+    }
+
+    print_request("PUT", url, data="binary-image")
+    response = requests.put(url, files=files, headers=umkm_headers)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Upload Store Image", success)
+
+    if not success:
+        print("❌ Upload image failed.")
+        return
+
+    image_url = response.json().get("image_url")
+    print(f"  📷 Uploaded Image URL: {image_url}")
+    
+    print("\n✔ All store API tests completed.\n")
+    
+    # ===============================
+    # 6. VALIDATE STORE (ADMIN only)
+    # ===============================
+    url = f"{BASE_URL}/foods/{store_umkm_id}/validate"
+    print_request("PUT", url)
+    response = requests.put(url, headers=umkm_headers)
+    print_response(response)
+
+    success = response.status_code == 200 and response.json().get("is_valid_food") == True
+    print_result("Validate Food (Admin Only)", success)
+
+    if not success:
+        print("❌ Food validation failed — stopping")
+        return
+
+
+# ========== FOOD API TESTS ==========
+
+def test_food_endpoints():
+    print_section("FOOD ENDPOINT TESTS")
+
+    # ===============================
+    # 0. LOGIN as Admin (or UMKM)
+    # ===============================
+    login_data = {
+        "username": "admin@gmail.com",
+        "password": "admin1"
+    }
+    url = f"{BASE_URL}/auth/login"
+    response = requests.post(url, data=login_data)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Login Admin", success)
+
+    if not success:
+        print("❌ Login failed — cannot continue")
+        return
+
+    token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    print(f"🔑 Token: {token[:30]}...")
+
+    # ===============================
+    # 1. CREATE FOOD
+    # ===============================
+    food_payload = {
+        "name": "Nasi Goreng",
+        "description": "Indonesian fried rice",
+        "category": "main_meals",
+        "main_ingredients": ["rice", "egg", "soy sauce"],
+        "taste_profile": ["savory"],
+        "texture": ["soft"],
+        "mood_tags": ["comfort"],
+        "store_id": None
+    }
+
+    url = f"{BASE_URL}/foods"
+    print_request("POST", url, food_payload)
+    response = requests.post(url, json=food_payload, headers=headers)
+    print_response(response)
+    success = response.status_code == 201
+    print_result("Create Food", success)
+
+    if not success:
+        print("❌ Food creation failed — stopping")
+        return
+
+    food_id = response.json()["id"]
+    print(f"Created Food ID = {food_id}")
+
+    # ===============================
+    # 2. LIST FOODS
+    # ===============================
+    url = f"{BASE_URL}/foods"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("List Foods", success)
+
+    # ===============================
+    # 3. GET FOOD DETAIL
+    # ===============================
+    url = f"{BASE_URL}/foods/{food_id}"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Get Food Detail", success)
+
+    # ===============================
+    # 4. UPDATE FOOD
+    # ===============================
+    update_payload = {
+        "description": "Updated fried rice",
+        "taste_profile": ["savory", "spicy"]
+    }
+
+    url = f"{BASE_URL}/foods/{food_id}"
+    print_request("PUT", url, update_payload)
+    response = requests.put(url, json=update_payload, headers=headers)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Update Food", success)
+
+
+    # ===============================
+    # 5. VALIDATE FOOD (ADMIN only)
+    # ===============================
+    url = f"{BASE_URL}/foods/{food_id}/validate"
+    print_request("PUT", url)
+    response = requests.put(url, headers=headers)
+    print_response(response)
+
+    success = response.status_code == 200 and response.json().get("is_valid_food") == True
+    print_result("Validate Food (Admin Only)", success)
+
+    if not success:
+        print("❌ Food validation failed — stopping")
+        return
+
+
+    # -----------------------------------------------------
+    # 6) UPLOAD IMAGE
+    # -----------------------------------------------------
+    url = f"{BASE_URL}/foods/{food_id}/image"
+
+    # Pakai binary fake image (tidak butuh file asli)
+    fake_image_content = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
+
+    files = {
+        "file": ("test.png", fake_image_content, "image/png")
+    }
+
+    print_request("PUT", url, data="binary-image")
+    response = requests.put(url, files=files, headers=headers)
+    print_response(response)
+    success = response.status_code == 200
+    print_result("Upload Store Image", success)
+
+    if not success:
+        print("❌ Upload image failed.")
+        return
+
+    image_url = response.json().get("image_url")
+    print(f"  📷 Uploaded Image URL: {image_url}")
+
+
+    # ===============================
+    # 7. DELETE FOOD
+    # ===============================
+    url = f"{BASE_URL}/foods/{food_id}"
+    print_request("DELETE", url)
+    response = requests.delete(url, headers=headers)
+
+    print(f"Status Code: {response.status_code}")
+
+    success = response.status_code == 204
+    print_result("Delete Food", success)
+
+    # ===============================
+    # 8. GET FOOD after DELETE → must 404
+    # ===============================
+    url = f"{BASE_URL}/foods/{food_id}"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    success = response.status_code == 404
+    print_result("Get Deleted Food (should 404)", success)
+
+
+# ========== MAIN TEST RUNNER ==========
+
+def run_all_tests():
+    """Run all API tests"""
+    print("\n" + "🚀" * 40)
+    print("  MOOD TO MAKAN API COMPREHENSIVE TEST SUITE")
+    print("  WITH DETAILED REQUEST/RESPONSE LOGGING")
+    print("🚀" * 40)
+    print(f"\nBase URL: {BASE_URL}")
+    
+    try:
+        # Run tests in order
+        test_auth_and_user()
+        test_store_full_flow()
+        test_food_endpoints()
+        
+    except requests.exceptions.ConnectionError:
+        print("\n❌ ERROR: Could not connect to API server")
+        print(f"Make sure the server is running at {BASE_URL}")
+        print("Run: uv run uvicorn app.main:app --reload")
+    except Exception as e:
+        print(f"\n❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    run_all_tests()

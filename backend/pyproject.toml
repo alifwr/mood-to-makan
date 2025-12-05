@@ -4,4 +4,32 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "alembic>=1.17.2",
+    "bcrypt==4.0.1",
+    "boto3>=1.41.4",
+    "email-validator>=2.3.0",
+    "fastapi>=0.122.0",
+    "httpx>=0.28.1",
+    "langchain>=1.1.0",
+    "langchain-openai>=1.1.0",
+    "langchain-google-genai>=2.0.8",
+    "passlib[bcrypt]>=1.7.4",
+    "pgvector>=0.4.1",
+    "psycopg2-binary>=2.9.11",
+    "pydantic>=2.12.4",
+    "pydantic-settings>=2.12.0",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.20",
+    "sqlalchemy>=2.0.44",
+    "types-boto3>=1.41.4",
+    "uvicorn[standard]>=0.38.0",
+]
+
+
+[dependency-groups]
+dev = [
+    "black>=25.11.0",
+    "isort>=7.0.0",
+    "pytest>=9.0.1",
+]
