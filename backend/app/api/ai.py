@@ -1,30 +1,33 @@
-from typing import Any, Optional
-from fastapi import APIRouter, Depends
+from typing import Any, Optional, List
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api import deps
 from app.services import ai_service
-from app.schemas.food import FoodSearchRequest, FoodRecommendationResponse, FoodRecommendationItem
+from app.models.food import Food
+from app.models.user import User
+from app.schemas.store import Store as StoreSchema
+from app.schemas.food import FoodRecommendationResponse, FoodRecommendationItem
 from app.schemas.description import (
-    DescriptionGenerateRequest,
-    DescriptionEnhanceRequest,
     DescriptionResponse,
     EnhancedDescriptionResponse,
-    PromotionalKeywordsResponse,
     FlavorCharacteristics
 )
 
 router = APIRouter()
 
-@router.post("/search")
-def search(
+# ========== AI POWERED STORE RECOMMENDATION ENDPOINTS ==========
+
+@router.get("/search-stores")
+def search_stores(
     query: str,
     db: Session = Depends(deps.get_db),
-) -> Any:
+) -> List[StoreSchema]:
     results = ai_service.search_stores_by_vector(query, db)
-    return results
+    # Convert SQLAlchemy models to Pydantic schemas
+    return [StoreSchema.model_validate(store) for store in results]
 
-@router.post("/recommend")
-def recommend(
+@router.get("/recommend-stores")
+def recommend_stores(
     preferences: str,
     db: Session = Depends(deps.get_db),
 ) -> Any:
@@ -32,25 +35,58 @@ def recommend(
     return {"recommendation": recommendation}
 
 
-# ========== FOOD RECOMMENDATION ENDPOINTS ==========
+# ========== AI POWERED FOOD RECOMMENDATION ENDPOINTS ==========
 
-@router.post("/recommend-food", response_model=FoodRecommendationResponse)
-def recommend_food(
-    request: FoodSearchRequest,
+@router.get("/search-foods")
+def search_foods(
+    query: str,
+    db: Session = Depends(deps.get_db),
+    limit: int = 5,
+    category: Optional[str] = None,
+    max_calories: Optional[float] = None,
+) -> Any:
+    try:
+        foods = ai_service.search_foods_by_vector(
+            query=query,
+            db=db,
+            limit=limit,
+            category=category,
+            max_calories=max_calories
+        )
+        
+        from app.schemas.food import FoodResponse
+        foods_data = [FoodResponse.model_validate(food) for food in foods]
+        
+        return {
+            "foods": foods_data,
+            "query": query,
+            "total_results": len(foods_data)
+        }
+    except Exception as e:
+        import traceback
+        print(f"Error in search_food: {e}")
+        traceback.print_exc()
+        return {
+            "foods": [],
+            "query": query,
+            "total_results": 0,
+            "error": str(e)
+        }
+
+@router.get("/recommend-foods", response_model=FoodRecommendationResponse)
+def recommend_foods(
+    query: str,
     db: Session = Depends(deps.get_db),
     current_user: Optional[Any] = Depends(deps.get_current_user_optional),
+    limit: int = 10,
 ) -> Any:
-    """
-    Get AI-powered food recommendations based on mood/preferences.
-    Uses vector similarity and LLM for personalized suggestions.
-    """
     user_id = current_user.id if current_user else None
     
     result = ai_service.recommend_foods_by_mood(
-        mood_description=request.query,
+        mood_description=query,
         db=db,
         user_id=user_id,
-        limit=request.limit
+        limit=limit
     )
     
     # Build response
@@ -65,60 +101,16 @@ def recommend_food(
     
     return FoodRecommendationResponse(
         recommendations=recommendations,
-        query=request.query,
+        query=query,
         total_results=len(recommendations)
     )
 
-
-@router.post("/search-food")
-def search_food(
-    request: FoodSearchRequest,
-    db: Session = Depends(deps.get_db),
-) -> Any:
-    """
-    Search foods using semantic vector search.
-    Supports filtering by category, calories, and ingredients.
-    """
-    try:
-        foods = ai_service.search_foods_by_vector(
-            query=request.query,
-            db=db,
-            limit=request.limit,
-            category=request.category,
-            max_calories=request.max_calories
-        )
-        
-        # Convert SQLAlchemy models to dicts for serialization
-        from app.schemas.food import FoodResponse
-        foods_data = [FoodResponse.model_validate(food) for food in foods]
-        
-        return {
-            "foods": foods_data,
-            "query": request.query,
-            "total_results": len(foods_data)
-        }
-    except Exception as e:
-        import traceback
-        print(f"Error in search_food: {e}")
-        traceback.print_exc()
-        return {
-            "foods": [],
-            "query": request.query,
-            "total_results": 0,
-            "error": str(e)
-        }
-
-
 @router.get("/personalized-recommendations")
-def get_personalized_recommendations(
+def personalized_recommendations(
     db: Session = Depends(deps.get_db),
     current_user: Any = Depends(deps.get_current_user),
     limit: int = 10,
 ) -> Any:
-    """
-    Get personalized food recommendations based on user's interaction history.
-    Requires authentication.
-    """
     try:
         foods = ai_service.get_personalized_recommendations(
             user_id=current_user.id,
@@ -145,27 +137,45 @@ def get_personalized_recommendations(
         }
 
 
-# ========== DESCRIPTION GENERATION ENDPOINTS ==========
+# ========== FOOD DESCRIPTION GENERATION ENDPOINTS ==========
 
-@router.post("/generate-description", response_model=DescriptionResponse)
-def generate_description(
-    request: DescriptionGenerateRequest,
+@router.post("/generate-food-description/{food_id}", response_model=DescriptionResponse)
+def generate_food_description(
+    food_id: int,
     db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Generate compelling food descriptions using AI.
+    Generate compelling food descriptions using AI based on existing food data.
+    Only the owner of the food can use this endpoint.
     Returns short description, long description, selling points, and flavor characteristics.
     """
+    # Check if food exists
+    food = db.query(Food).filter(Food.id == food_id).first()
+    if not food:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food not found"
+        )
+    
+    # Verify ownership
+    if food.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to generate descriptions for this food"
+        )
+    
+    # Use existing food data to generate description
     result = ai_service.generate_food_description(
-        name=request.name,
-        category=request.category,
-        main_ingredients=request.main_ingredients,
-        taste_profile=request.taste_profile,
-        texture=request.texture,
-        region=request.region,
-        selling_points=request.selling_points,
-        style=request.style,
-        language=request.language,
+        name=food.name,
+        category=food.category,
+        main_ingredients=food.main_ingredients or [],
+        taste_profile=food.taste_profile or [],
+        texture=food.texture or [],
+        region=None,  # Could be added to food model if needed
+        selling_points=None,
+        style="promotional",
+        language="en",
         db=db
     )
     
@@ -181,44 +191,47 @@ def generate_description(
     
     return DescriptionResponse(**result)
 
-
-@router.post("/enhance-description", response_model=EnhancedDescriptionResponse)
-def enhance_description(
-    request: DescriptionEnhanceRequest,
+@router.post("/generate-enhanced-food-description/{food_id}", response_model=EnhancedDescriptionResponse)
+def enhance_food_description(
+    food_id: int,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Enhance an existing food description using AI.
+    Enhance an existing food description using AI based on current description.
+    Only the owner of the food can use this endpoint.
+    Automatically saves the enhanced description to the database.
     """
+    # Check if food exists
+    food = db.query(Food).filter(Food.id == food_id).first()
+    if not food:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Food not found"
+        )
+    
+    # Verify ownership
+    if food.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to enhance descriptions for this food"
+        )
+    
+    # Use existing food description to enhance
+    current_description = food.description or f"{food.name} - {food.category}"
+    
     enhanced = ai_service.enhance_food_description(
-        current_description=request.current_description,
-        food_name=request.food_name,
-        category=request.category,
-        enhance_for=request.enhance_for,
-        additional_info=request.additional_info
+        current_description=current_description,
+        food_name=food.name,
+        category=food.category,
+        enhance_for="promotional",
+        additional_info=None
     )
+    
+    # Save enhanced description to database
+    food.enhanced_description = enhanced
+    db.commit()
+    db.refresh(food)
     
     return EnhancedDescriptionResponse(enhanced_description=enhanced)
 
-
-@router.get("/promotional-keywords", response_model=PromotionalKeywordsResponse)
-def get_promotional_keywords(
-    category: str,
-    db: Session = Depends(deps.get_db),
-) -> Any:
-    """
-    Get promotional keywords for a specific food category.
-    """
-    try:
-        keywords = ai_service.get_promotional_keywords_for_category(category, db)
-        return PromotionalKeywordsResponse(category=category, **keywords)
-    except Exception as e:
-        print(f"Error getting promotional keywords: {e}")
-        # Return empty keywords if there's an error
-        return PromotionalKeywordsResponse(
-            category=category,
-            selling_points=[],
-            flavors=[],
-            textures=[],
-            moods=[],
-            general=[]
-        )
