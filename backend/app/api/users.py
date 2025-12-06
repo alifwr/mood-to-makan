@@ -58,10 +58,6 @@ def update_user_me(
             raise HTTPException(status_code=400, detail="Full name cannot be empty")
         current_user.full_name = user_in.full_name
 
-    # image_url update (if provided)
-    if user_in.image_url is not None:
-        current_user.image_url = user_in.image_url
-
     db.add(current_user)
     db.commit()
     db.refresh(current_user)

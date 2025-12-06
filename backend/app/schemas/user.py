@@ -5,7 +5,7 @@ from app.models.user import UserRole
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str 
-    role: UserRole = UserRole.CLIENT
+    role: UserRole = UserRole.client
 
 class UserCreate(UserBase):
     password: str
@@ -13,7 +13,6 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     password: Optional[str] = None
-    image_url: Optional[str] = None
 
 class User(UserBase):
     id: int

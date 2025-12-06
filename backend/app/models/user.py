@@ -4,9 +4,9 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class UserRole(str, enum.Enum):
-    CLIENT = "client"
-    UMKM = "umkm"
-    ADMIN = "admin"
+    client = "client"
+    umkm = "umkm"
+    admin = "admin"
 
 class User(Base):
     __tablename__ = "users"
@@ -15,7 +15,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.CLIENT, nullable=False)
+    role = Column(Enum(UserRole), default=UserRole.client, nullable=False)
     image_url = Column(String, nullable=True)
     
     # Relationships
