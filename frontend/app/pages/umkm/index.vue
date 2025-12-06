@@ -5,9 +5,10 @@ definePageMeta({
 })
 
 const { data: stores } = await useApi<any[]>('/stores/')
+
 // Filter stores for current user (client-side filtering as per plan)
 const authStore = useAuthStore()
-const myStores = computed(() => stores.value?.filter(s => s.owner_id === authStore.user?.id) || [])
+const myStores = computed(() => stores.value?.filter(s => s.umkm_id === authStore.user?.id) || [])
 </script>
 
 <template>
