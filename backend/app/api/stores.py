@@ -142,50 +142,50 @@ def delete_store(
     return None
 
 @router.put("/{store_id}/validate", response_model=StoreSchema)
-def validate_food(
+def validate_store(
     *,
     db: Session = Depends(deps.get_db),
-    food_id: int,
+    store_id: int,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Mark a food item as valid (admin only).
+    Mark a store as valid (admin only).
     """
     # Check role
     if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can validate food")
+        raise HTTPException(status_code=403, detail="Only admin can validate store")
 
-    # Check food existence
-    food = db.query(Store).filter(Store.id == food_id).first()
-    if not food:
-        raise HTTPException(status_code=404, detail="Food not found")
+    # Check store existence
+    store = db.query(Store).filter(Store.id == store_id).first()
+    if not store:
+        raise HTTPException(status_code=404, detail="Store not found")
 
     # Mark as valid
-    food.is_valid_food = True
+    store.is_valid_store = True
 
     db.commit()
-    db.refresh(food)
-    return food
+    db.refresh(store)
+    return store
 
 @router.put("/{store_id}/invalidate", response_model=StoreSchema)
-def invalidate_food(
+def invalidate_store(
     *,
     db: Session = Depends(deps.get_db),
-    food_id: int,
+    store_id: int,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
-    Mark a food item as invalid (admin only).
+    Mark Store as invalid (admin only).
     """
     if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can invalidate food")
+        raise HTTPException(status_code=403, detail="Only admin can invalidate store")
 
-    food = db.query(Store).filter(Store.id == food_id).first()
-    if not food:
+    store = db.query(Store).filter(Store.id == store_id).first()
+    if not store:
         raise HTTPException(status_code=404, detail="Food not found")
 
-    food.is_valid_food = False
+    store.is_valid_store = False
 
     db.commit()
-    db.refresh(food)
-    return food
+    db.refresh(store)
+    return store
