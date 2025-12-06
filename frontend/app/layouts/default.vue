@@ -23,7 +23,7 @@
             Masuk Sini
           </NuxtLink>
           <NuxtLink to="/auth/login/umkm" class="text-sm font-medium px-4 py-2 bg-nature-800 text-nature-50 rounded-full hover:bg-nature-700 transition-colors shadow-lg hover:shadow-xl">
-            Login Juragan
+            Login UMKM
           </NuxtLink>
         </div>
       </div>
@@ -42,7 +42,7 @@
         <div class="col-span-1 md:col-span-2">
           <h3 class="text-2xl font-serif font-bold mb-4 text-nature-800">Mood2Makan</h3>
           <p class="text-nature-600 max-w-sm">
-            Temukan spot makan tersembunyi dan rasa otentik. Hubungkan pecinta kuliner dengan juragan lokal.
+            Platform eksplorasi kuliner berbasis AI. Hubungkan mood makanmu dengan UMKM terbaik di kota.
           </p>
         </div>
         <div>
@@ -50,7 +50,7 @@
           <ul class="space-y-2 text-sm text-nature-600">
             <li><NuxtLink to="/explore" class="hover:text-leaf-600">Cekidot</NuxtLink></li>
             <li><NuxtLink to="/about" class="hover:text-leaf-600">Tentang Kita</NuxtLink></li>
-            <li><NuxtLink to="/auth/login/umkm" class="hover:text-leaf-600">Buat Juragan</NuxtLink></li>
+            <li><NuxtLink to="/auth/login/umkm" class="hover:text-leaf-600">Gabung UMKM</NuxtLink></li>
           </ul>
         </div>
         <div>

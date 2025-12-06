@@ -7,18 +7,18 @@
       
       <div class="text-center z-10 max-w-4xl mx-auto px-6">
         <h1 class="text-6xl md:text-8xl font-serif font-bold mb-6 text-nature-900 leading-tight animate-fade-in-up">
-          Rasa Alam Asli <br />
-          <span class="text-leaf-600 italic">Bikin Nagih</span>
+          Mood Kamu, <br />
+          <span class="text-leaf-600 italic">Rekomendasi Kami</span>
         </h1>
         <p class="text-xl md:text-2xl text-nature-600 mb-10 max-w-2xl mx-auto animate-fade-in-up delay-200">
-          Rasain sensasi kuliner lokal yang otentik. Dari alam, dimasak pake hati.
+          Platform penghubung UMKM kuliner dengan seleramu. Cari makan pake bahasa sehari-hari, AI kami yang carikan.
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
           <NuxtLink to="/explore" class="px-8 py-4 bg-nature-800 text-nature-50 rounded-full font-medium hover:bg-nature-700 transition-all hover:scale-105 shadow-lg">
-            Mulai Jelajah
+            Cari Makan Sekarang
           </NuxtLink>
           <NuxtLink to="/auth/login/umkm" class="px-8 py-4 bg-white text-nature-800 border border-nature-200 rounded-full font-medium hover:bg-nature-50 transition-all hover:scale-105 shadow-sm">
-            Gabung Jadi Mitra
+            Gabung Jadi UMKM
           </NuxtLink>
         </div>
       </div>
@@ -78,12 +78,12 @@
       <div class="absolute inset-0 bg-nature-800 skew-y-3 transform origin-bottom-right scale-110"></div>
       <div class="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 text-nature-50">
         <div class="md:w-1/2">
-          <h2 class="text-4xl md:text-5xl font-serif font-bold mb-6">Siap buat goyang lidah?</h2>
+          <h2 class="text-4xl md:text-5xl font-serif font-bold mb-6">Lapar tapi bingung mau makan apa?</h2>
           <p class="text-lg opacity-90 mb-8">
-            Gabung sama ribuan pecinta kuliner yang udah nemu tempat favorit baru di Mood2Makan.
+            Ceritain aja mood kamu ke AI kami, dan temukan UMKM kuliner terbaik di sekitarmu yang pas banget sama seleramu.
           </p>
           <NuxtLink to="/auth/login/client" class="inline-block px-8 py-4 bg-leaf-500 text-white rounded-full font-medium hover:bg-leaf-600 transition-colors shadow-lg">
-            Bikin Akun Gratis
+            Daftar Sebagai Client
           </NuxtLink>
         </div>
         <div class="md:w-1/2 flex justify-center">
