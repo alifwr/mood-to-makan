@@ -82,12 +82,12 @@
           <p class="text-lg opacity-90 mb-8">
             Ceritain aja mood kamu ke AI kami, dan temukan UMKM kuliner terbaik di sekitarmu yang pas banget sama seleramu.
           </p>
-          <NuxtLink to="/auth/login/client" class="inline-block px-8 py-4 bg-leaf-500 text-white rounded-full font-medium hover:bg-leaf-600 transition-colors shadow-lg">
+          <NuxtLink to="/auth/register/client" class="inline-block px-8 py-4 bg-leaf-500 text-white rounded-full font-medium hover:bg-leaf-600 transition-colors shadow-lg">
             Daftar Sebagai Client
           </NuxtLink>
         </div>
         <div class="md:w-1/2 flex justify-center">
-           <OrganicShape color="sand" size="lg" variant="2" class="opacity-80" />
+           <OrganicShape color="sand" size="lg" :variant="2" class="opacity-80" />
         </div>
       </div>
     </section>

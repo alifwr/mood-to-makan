@@ -6,9 +6,10 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     public: {
-      apiBase: '/api/v1' // Point to local proxy
-    },
-    // Private config for server-side
-    apiProxyTarget: 'http://localhost:8000/api/v1'
+      apiBase: '/api'
+    }
+  },
+  routeRules: {
+    '/api/**': { proxy: 'http://localhost:8000/api/v1/**' }
   }
 })

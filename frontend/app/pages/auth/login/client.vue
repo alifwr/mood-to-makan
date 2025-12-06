@@ -20,31 +20,22 @@ const handleLogin = async () => {
   errorMsg.value = ''
 
   try {
-    // 1. Login to get token
     const formData = new FormData()
     formData.append('username', form.value.username)
     formData.append('password', form.value.password)
 
-    const { data, error } = await useApi<any>('/auth/login', {
+    const data = await $api<any>('/auth/login', {
       method: 'POST',
       body: formData
     })
 
-    if (error.value) {
-      throw new Error(error.value.data?.detail || 'Login failed')
-    }
-
-    if (data.value) {
-      authStore.setToken(data.value.access_token)
-
-      // 2. Fetch user details
+    if (data) {
+      authStore.setToken(data.access_token)
       await authStore.fetchUser()
-
-      // 3. Redirect
       router.push('/')
     }
   } catch (e: any) {
-    errorMsg.value = e.message
+    errorMsg.value = e.data?.detail || e.message || 'Login failed'
   } finally {
     isLoading.value = false
   }
@@ -98,7 +89,8 @@ const handleLogin = async () => {
 
       <div class="mt-8 text-center text-sm text-nature-600">
         Belum punya akun?
-        <NuxtLink to="/auth/register" class="text-leaf-600 hover:text-leaf-700 font-medium">Daftar Sini</NuxtLink>
+        <NuxtLink to="/auth/register/client" class="text-leaf-600 hover:text-leaf-700 font-medium">Daftar Sini
+        </NuxtLink>
       </div>
     </div>
   </NuxtLayout>
