@@ -1,9 +1,15 @@
-from sqlalchemy import Integer, String, ForeignKey, JSON, DateTime, Boolean
+from sqlalchemy import Integer, String, ForeignKey, JSON, DateTime, Boolean, Float
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from pgvector.sqlalchemy import Vector
 from app.core.database import Base
 from datetime import datetime
-from typing import List, Optional, Any
+from typing import List, Optional, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.store import Store
+    from app.models.user import User
+    from app.models.review import Review
+    from app.models.user_food_history import UserFoodHistory
 
 class Food(Base):
     __tablename__ = "foods"
@@ -15,6 +21,7 @@ class Food(Base):
     description: Mapped[str] = mapped_column(String, nullable=False)
     enhanced_description: Mapped[str | None] = mapped_column(String, nullable=True)
     category: Mapped[str] = mapped_column(String, index=True, nullable=False)  # drinks, desserts, main_meals, snacks
+    price: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     main_ingredients: Mapped[List[str] | None] = mapped_column(JSON, default=[], nullable=True)  # List of main ingredients
     taste_profile: Mapped[List[str]] = mapped_column(JSON, default=[], nullable=False)  # e.g., ["sweet", "spicy", "sour", "savory", "creamy", "fresh"]
     texture: Mapped[List[str]] = mapped_column(JSON, default=[], nullable=False)  # e.g., ["crispy", "soft", "chewy", "crunchy"]

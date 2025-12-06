@@ -61,6 +61,7 @@ def list_foods(
     limit: int = Query(100, ge=1, le=100),
     category: Optional[str] = Query(None, description="Filter by category"),
     search: Optional[str] = Query(None, description="Search in name and description"),
+    store_id: Optional[int] = Query(None, description="Filter by store_id"),
 ) -> Any:
     """
     Get list of foods with optional filters.
@@ -69,6 +70,9 @@ def list_foods(
     
     if category:
         query = query.filter(Food.category == category)
+
+    if store_id:
+        query = query.filter(Food.store_id == store_id)
     
     if search:
         search_pattern = f"%{search}%"
