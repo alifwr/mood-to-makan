@@ -125,7 +125,7 @@ def update_food(
             .filter(
                 Food.id != food_id,  
                 Food.name == new_name,
-                ((Food.store_id != food.store_id) | (Food.store_id == None))
+                ((Food.store_id == food.store_id) | (Food.store_id == None))
             )
             .first()
         )
@@ -133,7 +133,7 @@ def update_food(
         if duplicate:
             raise HTTPException(
                 status_code=400,
-                detail="Food name already used in another store or global list"
+                detail="Food name already exists in this store"
             )
 
     # Update fields normally

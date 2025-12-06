@@ -7,7 +7,7 @@ const route = useRoute()
 const storeId = route.params.id
 
 const { data: store } = await useApi<any>(`/stores/${storeId}`)
-const { data: products } = await useApi<any[]>(`/products/?store_id=${storeId}`)
+const { data: foods } = await useApi<any[]>(`/foods/?store_id=${storeId}`)
 const { data: reviews, refresh: refreshReviews } = await useApi<any[]>(`/reviews/?store_id=${storeId}`)
 
 const authStore = useAuthStore()
@@ -74,14 +74,14 @@ const submitReview = async () => {
           <span class="text-4xl">📜</span> Menu
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div v-for="product in products" :key="product.id" class="bg-white p-4 rounded-2xl border border-nature-100 flex gap-4 hover:shadow-md transition-shadow">
-            <img :src="product.image_url || 'https://via.placeholder.com/150'" class="w-24 h-24 rounded-xl object-cover bg-nature-100" />
+          <div v-for="food in foods" :key="food.id" class="bg-white p-4 rounded-2xl border border-nature-100 flex gap-4 hover:shadow-md transition-shadow">
+            <img :src="food.image_url || 'https://via.placeholder.com/150'" class="w-24 h-24 rounded-xl object-cover bg-nature-100" />
             <div class="flex-1">
               <div class="flex justify-between items-start mb-1">
-                <h3 class="font-bold text-lg text-nature-900">{{ product.name }}</h3>
-                <span class="font-bold text-leaf-600">Rp {{ product.price.toLocaleString() }}</span>
+                <h3 class="font-bold text-lg text-nature-900">{{ food.name }}</h3>
+                <span class="font-bold text-leaf-600">Rp {{ food.price.toLocaleString() }}</span>
               </div>
-              <p class="text-sm text-nature-600 line-clamp-2">{{ product.description }}</p>
+              <p class="text-sm text-nature-600 line-clamp-2">{{ food.description }}</p>
             </div>
           </div>
         </div>
