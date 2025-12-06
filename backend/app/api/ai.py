@@ -148,6 +148,7 @@ def generate_food_description(
     """
     Generate compelling food descriptions using AI based on existing food data.
     Only the owner of the food can use this endpoint.
+    Automatically saves the generated description to the database.
     Returns short description, long description, selling points, and flavor characteristics.
     """
     # Check if food exists
@@ -188,6 +189,12 @@ def generate_food_description(
             texture_description=flavor_data.get("texture_description", ""),
             aroma_notes=flavor_data.get("aroma_notes", "")
         )
+    
+    # Save generated description to database
+    if result.get("short_description"):
+        food.description = result["short_description"]
+        db.commit()
+        db.refresh(food)
     
     return DescriptionResponse(**result)
 
