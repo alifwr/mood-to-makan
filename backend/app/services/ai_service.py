@@ -833,69 +833,69 @@ def generate_improvement_suggestions(problems: list, db: Session) -> list:
         ]
 
 
-def aggregate_store_insights(store_id: int, db: Session, days: Optional[int] = None) -> dict:
-    """
-    Aggregate insights from all reviews for a store.
-    """
-    from app.models.review import Review
-    from app.models.review_analysis import ReviewAnalysis
-    from app.models.store import Store
-    from datetime import datetime, timedelta
+# def aggregate_store_insights(store_id: int, db: Session, days: Optional[int] = None) -> dict:
+#     """
+#     Aggregate insights from all reviews for a store.
+#     """
+#     from app.models.review import Review
+#     from app.models.review_analysis import ReviewAnalysis
+#     from app.models.store import Store
+#     from datetime import datetime, timedelta
     
-    store = db.query(Store).filter(Store.id == store_id).first()
-    if not store:
-        return {}
+#     store = db.query(Store).filter(Store.id == store_id).first()
+#     if not store:
+#         return {}
     
-    # Build query
-    query = db.query(Review).filter(Review.store_id == store_id)
+#     # Build query
+#     query = db.query(Review).filter(Review.store_id == store_id)
     
-    if days:
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
-        query = query.filter(Review.created_at >= cutoff_date)
+#     if days:
+#         cutoff_date = datetime.utcnow() - timedelta(days=days)
+#         query = query.filter(Review.created_at >= cutoff_date)
     
-    reviews = query.all()
+#     reviews = query.all()
     
-    if not reviews:
-        return {
-            "store_id": store_id,
-            "store_name": store.name,
-            "total_reviews": 0,
-            "message": "No reviews found"
-        }
+#     if not reviews:
+#         return {
+#             "store_id": store_id,
+#             "store_name": store.name,
+#             "total_reviews": 0,
+#             "message": "No reviews found"
+#         }
     
-    # Calculate metrics
-    total_reviews = len(reviews)
-    average_rating = sum(r.rating for r in reviews) / total_reviews
+#     # Calculate metrics
+#     total_reviews = len(reviews)
+#     average_rating = sum(r.rating for r in reviews) / total_reviews
     
-    # Sentiment distribution
-    sentiment_dist = {"positive": 0, "neutral": 0, "negative": 0, "total": total_reviews}
-    for review in reviews:
-        if review.sentiment_label:
-            sentiment_dist[review.sentiment_label] = sentiment_dist.get(review.sentiment_label, 0) + 1
+#     # Sentiment distribution
+#     sentiment_dist = {"positive": 0, "neutral": 0, "negative": 0, "total": total_reviews}
+#     for review in reviews:
+#         if review.sentiment_label:
+#             sentiment_dist[review.sentiment_label] = sentiment_dist.get(review.sentiment_label, 0) + 1
     
-    # Aggregate problems
-    problem_counts = {}
-    for review in reviews:
-        analysis = db.query(ReviewAnalysis).filter(ReviewAnalysis.review_id == review.id).first()
-        if analysis and analysis.detected_problems:
-            for problem_key in analysis.detected_problems:
-                problem_counts[problem_key] = problem_counts.get(problem_key, 0) + 1
+#     # Aggregate problems
+#     problem_counts = {}
+#     for review in reviews:
+#         analysis = db.query(ReviewAnalysis).filter(ReviewAnalysis.review_id == review.id).first()
+#         if analysis and analysis.detected_problems:
+#             for problem_key in analysis.detected_problems:
+#                 problem_counts[problem_key] = problem_counts.get(problem_key, 0) + 1
     
-    # Top problems
-    top_problems = [
-        {
-            "category": cat,
-            "occurrences": count,
-            "percentage": (count / total_reviews) * 100
-        }
-        for cat, count in sorted(problem_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-    ]
+#     # Top problems
+#     top_problems = [
+#         {
+#             "category": cat,
+#             "occurrences": count,
+#             "percentage": (count / total_reviews) * 100
+#         }
+#         for cat, count in sorted(problem_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+#     ]
     
-    return {
-        "store_id": store_id,
-        "store_name": store.name,
-        "total_reviews": total_reviews,
-        "average_rating": round(average_rating, 2),
-        "sentiment_distribution": sentiment_dist,
-        "top_problems": top_problems
-    }
+#     return {
+#         "store_id": store_id,
+#         "store_name": store.name,
+#         "total_reviews": total_reviews,
+#         "average_rating": round(average_rating, 2),
+#         "sentiment_distribution": sentiment_dist,
+#         "top_problems": top_problems
+#     }
