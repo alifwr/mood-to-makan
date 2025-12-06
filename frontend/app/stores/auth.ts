@@ -12,7 +12,7 @@ interface User {
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: null as User | null,
-        token: null as string | null,
+        token: useCookie('auth_token').value || null,
     }),
     getters: {
         isAuthenticated: (state) => !!state.token,
