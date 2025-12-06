@@ -20,7 +20,7 @@ def get_current_user(
     try:
         secret = settings.SECRET_KEY.get_secret_value() if settings.SECRET_KEY else "insecure-secret-key-dev-only"
         payload = jwt.decode(
-            token, secret, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY.get_secret_value(), algorithms=[settings.ALGORITHM]
         )
         token_data = TokenData(**payload)
     except (JWTError, ValidationError):
@@ -47,7 +47,7 @@ def get_current_user_optional(
     try:
         secret = settings.SECRET_KEY.get_secret_value() if settings.SECRET_KEY else "insecure-secret-key-dev-only"
         payload = jwt.decode(
-            token, secret, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY.get_secret_value(), algorithms=[settings.ALGORITHM]
         )
         token_data = TokenData(**payload)
         user = db.query(User).filter(User.email == token_data.sub).first()

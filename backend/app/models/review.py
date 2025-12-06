@@ -19,7 +19,7 @@ class Review(Base):
     created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-     # Relationships
+    # Relationships
     user: Mapped["User"] = relationship("User", back_populates="reviews")
     store: Mapped["Store"] = relationship("Store", back_populates="reviews")
     food: Mapped["Food"] = relationship("Food", back_populates="reviews")

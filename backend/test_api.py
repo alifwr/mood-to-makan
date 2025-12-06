@@ -208,6 +208,7 @@ def test_auth_and_user():
     print_response(response)
     print_result("Upload User Image", response.status_code == 200)
 
+
 # ========== STORE API TEST ==========
 
 def test_store_full_flow():
@@ -543,6 +544,299 @@ def test_food_endpoints():
     print_result("Get Deleted Food (should 404)", success)
 
 
+# ========== USER FOOD HISTORY API TESTS ==========
+
+def test_user_food_history():
+    global auth_token
+    print_section("USER FOOD HISTORY & PREFERENCES TESTS")
+
+    # ===============================
+    # 1. Login as Client
+    # ===============================
+    login_data = {
+        "username": "client@gmail.com",
+        "password": "client",
+    }
+
+    url = f"{BASE_URL}/auth/login"
+    response = requests.post(url, data=login_data)
+    print_response(response)
+
+    if response.status_code != 200:
+        print("❌ Login failed. Stopping tests.")
+        return
+
+    auth_token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {auth_token}"}
+
+    # ===============================
+    # 2. Create Foods (diverse data)
+    # ===============================
+    foods_payload = [
+        {
+            "name": "Nasi Rendang",
+            "description": "Rich beef rendang with rice",
+            "category": "main_meals",
+            "main_ingredients": ["rice", "beef", "spices"],
+            "taste_profile": ["savory", "spicy"],
+            "texture": ["soft"],
+            "mood_tags": ["comfort"],
+            "store_id": None
+        },
+        {
+            "name": "Ice Matcha Latte",
+            "description": "Sweet and creamy matcha drink",
+            "category": "beverages",
+            "main_ingredients": ["milk", "matcha"],
+            "taste_profile": ["sweet"],
+            "texture": ["smooth"],
+            "mood_tags": ["relaxed"],
+            "store_id": None
+        }
+    ]
+
+    food_ids = []
+
+    for food in foods_payload:
+        url = f"{BASE_URL}/foods"
+        print_request("POST", url, food)
+        response = requests.post(url, json=food, headers=headers)
+        print_response(response)
+
+        if response.status_code != 201:
+            print("❌ Food creation failed — stopping test")
+            return
+
+        food_id = response.json()["id"]
+        food_ids.append(food_id)
+
+    print(f"✅ Created Foods: {food_ids}")
+
+    # ===============================
+    # 3. Simulate User Interactions
+    # ===============================
+    url = f"{BASE_URL}/users/me/food-history"
+
+    interactions = [
+        # Food 1 interactions
+        {"food_id": food_ids[0], "interaction_type": "viewed", "mood_context": "hungry"},
+        {"food_id": food_ids[0], "interaction_type": "selected", "mood_context": "very hungry"},
+        {"food_id": food_ids[0], "interaction_type": "rated", "rating": 4.5, "mood_context": "satisfied"},
+
+        # Food 2 interactions
+        {"food_id": food_ids[1], "interaction_type": "viewed", "mood_context": "tired"},
+        {"food_id": food_ids[1], "interaction_type": "rated", "rating": 4.0, "mood_context": "relaxed"},
+    ]
+
+    for i, payload in enumerate(interactions, start=1):
+        print_request("POST", url, payload)
+        response = requests.post(url, json=payload, headers=headers)
+        print_response(response)
+        print_result(f"Interaction #{i}", response.status_code == 201)
+
+    # ===============================
+    # 4. GET /users/me/food-history
+    # ===============================
+    url = f"{BASE_URL}/users/me/food-history"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    print_result("Get Food History", response.status_code == 200)
+
+    # ===============================
+    # 5. GET /users/me/food-preferences
+    # ===============================
+    url = f"{BASE_URL}/users/me/food-preferences"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+
+    success = response.status_code == 200
+    print_result("Get Food Preferences", success)
+
+    if success:
+        prefs = response.json()
+        print("✅ Derived Preferences Summary:")
+        print(f"  Favorite Categories : {prefs['favorite_categories']}")
+        print(f"  Favorite Tastes     : {prefs['favorite_tastes']}")
+        print(f"  Favorite Moods      : {prefs['favorite_moods']}")
+        print(f"  Average Rating      : {prefs['average_rating']}")
+        print(f"  Total Interactions  : {prefs['total_interactions']}")
+        print(f"  Most Selected Foods : {prefs['most_selected_foods']}")
+
+
+# ========== REVIEWS API TESTS ==========
+
+def test_reviews_api():
+    global auth_token
+    print_section("READ REVIEWS BY STORE TEST")
+
+    # ===============================
+    # 1. Login as Client
+    # ===============================
+    login_data = {
+        "username": "client@gmail.com",
+        "password": "client",
+    }
+
+    url = f"{BASE_URL}/auth/login"
+    response = requests.post(url, data=login_data)
+    print_response(response)
+
+    if response.status_code != 200:
+        print("❌ Login failed")
+        return
+     
+    auth_token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {auth_token}"}
+    
+    url = f"{BASE_URL}/users/me"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    user_id = response.json()["id"]
+    print_result("Get Current User", response.status_code == 200)
+
+    # ===============================
+    # 2. Create Store
+    # ===============================
+    store_payload = {
+        "name": "Warung Sederhana",
+        "description": "Authentic Minang food",
+        "address": "Padang Street No. 1",
+        "latitude": -0.9471,
+        "longitude": 100.4172
+    }
+
+    url = f"{BASE_URL}/stores"
+    print_request("POST", url, store_payload)
+    response = requests.post(url, json=store_payload, headers=headers)
+    print_response(response)
+
+    if response.status_code not in [200, 201]:
+        print("❌ Store creation failed")
+        return
+
+    store_id = response.json()["id"]
+    print(f"✅ Created Store ID = {store_id}")
+
+    # ===============================
+    # 3. Create Food (belong to store)
+    # ===============================
+    food_payload = {
+        "name": "Rendang",
+        "description": "Slow cooked beef rendang",
+        "category": "main_meals",
+        "main_ingredients": ["beef", "spices"],
+        "taste_profile": ["savory", "spicy"],
+        "texture": ["tender"],
+        "mood_tags": ["comfort"],
+        "store_id": store_id
+    }
+
+    url = f"{BASE_URL}/foods"
+    print_request("POST", url, food_payload)
+    response = requests.post(url, json=food_payload, headers=headers)
+    print_response(response)
+
+    if response.status_code != 201:
+        print("❌ Food creation failed")
+        return
+
+    food_id_1 = response.json()["id"]
+    
+    food_payload = {
+        "name": "Semur",
+        "description": "Slow cooked beef semur",
+        "category": "main_meals",
+        "main_ingredients": ["beef", "spice"],
+        "taste_profile": ["savory", "sweet"],
+        "texture": ["tender"],
+        "mood_tags": ["comfort"],
+        "store_id": store_id
+    }
+
+    url = f"{BASE_URL}/foods"
+    print_request("POST", url, food_payload)
+    response = requests.post(url, json=food_payload, headers=headers)
+    print_response(response)
+
+    if response.status_code != 201:
+        print("❌ Food creation failed")
+        return
+
+    food_id_2 = response.json()["id"]
+
+    # ===============================
+    # 4. Create Reviews (store-based & food-based)
+    # ===============================
+    url = f"{BASE_URL}/reviews"
+
+    review_payloads = [
+        {
+            "food_id": food_id_2,
+            "store_id": store_id,
+            "rating": 4.5,
+            "comment": "Great service and authentic taste"
+        },
+        {
+            "food_id": food_id_1,
+            "store_id": store_id,
+            "rating": 5.0,
+            "comment": "The rendang is the best in town"
+        }
+    ]
+
+    for i, payload in enumerate(review_payloads, start=1):
+        print_request("POST", url, payload)
+        response = requests.post(url, json=payload, headers=headers)
+        print_response(response)
+        print_result(f"Create Review #{i}", response.status_code == 201)
+
+    # ===============================
+    # 5. READ Reviews by Store
+    # ===============================
+    url = f"{BASE_URL}/reviews/store/{store_id}"
+    print_request("GET", url)
+    response = requests.get(url)
+    print_response(response)
+
+    success = response.status_code == 200
+    print_result("Read Reviews by Store", success)
+
+    if success:
+        reviews = response.json()
+        print(f"✅ Total Reviews for Store {store_id}: {len(reviews)}")
+        for r in reviews:
+            print(f" - ⭐ {r['rating']} | {r['comment']}")
+    
+    # ===============================
+    # 6. Read Reviews by Food
+    # ===============================
+    url = f"{BASE_URL}/reviews/food/{food_id_1}"
+    print_request("GET", url)
+    response = requests.get(url)
+    print_response(response)
+    print_result("Get Reviews by Food", response.status_code == 200)
+    
+    # ===============================
+    # 7. READ Reviews by User
+    # ===============================
+    url = f"{BASE_URL}/reviews/user/{user_id}"
+    print_request("GET", url)
+    response = requests.get(url)
+    print_response(response)
+
+    success = response.status_code == 200
+    print_result("Read Reviews by User", success)
+
+    if success:
+        reviews = response.json()
+        print(f"✅ Total Reviews by User {user_id}: {len(reviews)}")
+        for r in reviews:
+            print(f" - ⭐ {r['rating']} | {r['comment']}")
+
+
 # ========== MAIN TEST RUNNER ==========
 
 def run_all_tests():
@@ -554,10 +848,12 @@ def run_all_tests():
     print(f"\nBase URL: {BASE_URL}")
     
     try:
-        # Run tests in order
-        test_auth_and_user()
-        test_store_full_flow()
-        test_food_endpoints()
+        # Run tests in order, assumption: the database is empty
+        # test_auth_and_user()
+        # test_store_full_flow()
+        # test_food_endpoints()
+        # test_user_food_history()
+        test_reviews_api()
         
     except requests.exceptions.ConnectionError:
         print("\n❌ ERROR: Could not connect to API server")
