@@ -42,13 +42,16 @@ const displayStores = computed(() => {
       <h1 class="text-4xl md:text-5xl font-serif font-bold text-nature-900 mb-6">
         Lagi <span class="text-leaf-600 italic">mood</span> makan apa?
       </h1>
+      <p class="text-nature-600 mb-8 text-lg">
+        Tulis aja apa yang lagi kamu rasain atau pengen. AI kami bakal cariin UMKM yang pas buat kamu.
+      </p>
       <div class="relative">
         <input 
           v-model="query" 
           @keyup.enter="handleSearch"
           type="text" 
           class="w-full px-8 py-5 rounded-full border-2 border-nature-200 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100 outline-none text-lg shadow-lg transition-all"
-          placeholder="Coba 'mie pedas tempat nyaman' atau 'martabak manis deket sini'..." 
+          placeholder="Contoh: 'Lagi sedih pengen yang manis', 'Habis gajian pengen mewah', atau 'Tanggal tua irit'..." 
         />
         <button 
           @click="handleSearch"
@@ -58,10 +61,10 @@ const displayStores = computed(() => {
         </button>
       </div>
       <div class="mt-4 flex justify-center gap-2 text-sm text-nature-500">
-        <span>Coba ini:</span>
-        <button @click="query='Nasi Padang Asli'; handleSearch()" class="hover:text-leaf-600 underline">Nasi Padang Asli</button>
-        <button @click="query='Tempat ngopi santuy'; handleSearch()" class="hover:text-leaf-600 underline">Kopi Santuy</button>
-        <button @click="query='Jajanan murah meriah'; handleSearch()" class="hover:text-leaf-600 underline">Jajanan Murah</button>
+        <span>Coba mood ini:</span>
+        <button @click="query='Lagi galau butuh coklat'; handleSearch()" class="hover:text-leaf-600 underline">Lagi Galau</button>
+        <button @click="query='Rayain ulang tahun temen'; handleSearch()" class="hover:text-leaf-600 underline">Ultah Temen</button>
+        <button @click="query='Makan siang sehat'; handleSearch()" class="hover:text-leaf-600 underline">Makan Sehat</button>
       </div>
     </div>
 

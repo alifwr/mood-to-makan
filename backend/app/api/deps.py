@@ -19,7 +19,7 @@ def get_current_user(
 ) -> User:
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY.get_secret_value(), algorithms=[settings.ALGORITHM]
         )
         token_data = TokenData(**payload)
     except (JWTError, ValidationError):
@@ -45,7 +45,7 @@ def get_current_user_optional(
     
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY.get_secret_value(), algorithms=[settings.ALGORITHM]
         )
         token_data = TokenData(**payload)
         user = db.query(User).filter(User.email == token_data.sub).first()

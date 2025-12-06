@@ -1,18 +1,21 @@
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import AnyHttpUrl, field_validator, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str
+    # optional project/name defaults so Settings() can be created during tests/static analysis
+    PROJECT_NAME: str | None = "mood-to-makan"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str
+    # make secret optional (use SecretStr for real deployments via env)
+    SECRET_KEY: SecretStr | None = None
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     ALGORITHM: str = "HS256"
     
-    POSTGRES_SERVER: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
+    # Postgres settings may come from environment; allow None for safe instantiation
+    POSTGRES_SERVER: str | None = None
+    POSTGRES_USER: str | None = None
+    POSTGRES_PASSWORD: str | None = None
+    POSTGRES_DB: str | None = None
     DATABASE_URL: Union[str, None] = None
 
     @field_validator("DATABASE_URL", mode="before")
@@ -27,17 +30,17 @@ class Settings(BaseSettings):
         )
 
     # OpenRouter Configuration
-    OPENROUTER_API_KEY: str | None = None
+    OPENROUTER_API_KEY: SecretStr | None = None
     OPENROUTER_MODEL: str = "google/gemini-2.0-flash-001"
     OPENROUTER_EMBEDDING_MODEL: str = "text-embedding-3-small"
     
     # Gemini Configuration
-    GEMINI_API_KEY: str | None = None
+    GEMINI_API_KEY: SecretStr | None = None
     GEMINI_MODEL: str = "gemini-2.0-flash-exp"
     GEMINI_EMBEDDING_MODEL: str = "models/text-embedding-004"
     
     # Legacy/Optional
-    OPENAI_API_KEY: str | None = None
+    OPENAI_API_KEY: SecretStr | None = None
 
     # S3 Settings
     S3_ACCESS_KEY: str | None = None
