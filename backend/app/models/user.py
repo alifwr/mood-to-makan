@@ -1,6 +1,6 @@
 import enum
-from sqlalchemy import Column, Integer, String, Enum
-from sqlalchemy.orm import relationship
+from sqlalchemy import Integer, String, Enum
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.database import Base
 
 class UserRole(str, enum.Enum):
@@ -11,12 +11,12 @@ class UserRole(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.client, nullable=False)
-    image_url = Column(String, nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    full_name: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.client, nullable=False)
+    image_url: Mapped[str | None] = mapped_column(String, nullable=True)
     
     # Relationships
     umkm_stores = relationship("Store", back_populates="umkm")

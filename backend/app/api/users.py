@@ -72,7 +72,7 @@ def upload_user_image(
 ) -> Any:
 
     # Validate file type
-    if not file.content_type.startswith("image/"):
+    if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=400, 
             detail="File must be an image (jpg/png)"
