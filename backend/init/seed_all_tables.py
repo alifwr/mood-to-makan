@@ -190,6 +190,7 @@ def seed_foods(db: Session):
                     description=food_data["description"],
                     enhanced_description=f"Delicious {food_data['name']}",
                     category=food_data["category"],
+                    price=food_data["price"],
                     main_ingredients=["ingredient1", "ingredient2"],
                     taste_profile=food_data["taste_profile"],
                     texture=food_data["texture"],
