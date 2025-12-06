@@ -67,3 +67,28 @@ def read_reviews_by_food(
 ) -> Any:
     reviews = db.query(Review).filter(Review.food_id == food_id).offset(skip).limit(limit).all()
     return reviews
+
+@router.get("/user/{user_id}", response_model=List[ReviewSchema])
+def read_reviews_by_user(
+    user_id: int,
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get all reviews written by a specific user.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    reviews = (
+        db.query(Review)
+        .filter(Review.user_id == user_id)
+        .order_by(Review.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    return reviews

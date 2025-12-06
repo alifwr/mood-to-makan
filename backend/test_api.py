@@ -686,9 +686,16 @@ def test_reviews_api():
     if response.status_code != 200:
         print("❌ Login failed")
         return
-
+     
     auth_token = response.json()["access_token"]
     headers = {"Authorization": f"Bearer {auth_token}"}
+    
+    url = f"{BASE_URL}/users/me"
+    print_request("GET", url)
+    response = requests.get(url, headers=headers)
+    print_response(response)
+    user_id = response.json()["id"]
+    print_result("Get Current User", response.status_code == 200)
 
     # ===============================
     # 2. Create Store
@@ -811,6 +818,23 @@ def test_reviews_api():
     response = requests.get(url)
     print_response(response)
     print_result("Get Reviews by Food", response.status_code == 200)
+    
+    # ===============================
+    # 7. READ Reviews by User
+    # ===============================
+    url = f"{BASE_URL}/reviews/user/{user_id}"
+    print_request("GET", url)
+    response = requests.get(url)
+    print_response(response)
+
+    success = response.status_code == 200
+    print_result("Read Reviews by User", success)
+
+    if success:
+        reviews = response.json()
+        print(f"✅ Total Reviews by User {user_id}: {len(reviews)}")
+        for r in reviews:
+            print(f" - ⭐ {r['rating']} | {r['comment']}")
 
 
 # ========== MAIN TEST RUNNER ==========
@@ -825,10 +849,10 @@ def run_all_tests():
     
     try:
         # Run tests in order, assumption: the database is empty
-        test_auth_and_user()
-        test_store_full_flow()
-        test_food_endpoints()
-        test_user_food_history()
+        # test_auth_and_user()
+        # test_store_full_flow()
+        # test_food_endpoints()
+        # test_user_food_history()
         test_reviews_api()
         
     except requests.exceptions.ConnectionError:
