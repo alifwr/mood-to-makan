@@ -14,9 +14,6 @@
         <NuxtLink to="/umkm/stores" class="flex items-center px-4 py-3 rounded-xl hover:bg-nature-700 transition-colors" active-class="bg-nature-700 text-white">
           <span class="mr-3">🏪</span> My Stores
         </NuxtLink>
-        <NuxtLink to="/umkm/products" class="flex items-center px-4 py-3 rounded-xl hover:bg-nature-700 transition-colors" active-class="bg-nature-700 text-white">
-          <span class="mr-3">📦</span> Products
-        </NuxtLink>
         <NuxtLink to="/umkm/reviews" class="flex items-center px-4 py-3 rounded-xl hover:bg-nature-700 transition-colors" active-class="bg-nature-700 text-white">
           <span class="mr-3">⭐</span> Reviews
         </NuxtLink>
