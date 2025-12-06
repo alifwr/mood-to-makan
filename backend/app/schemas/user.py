@@ -1,10 +1,11 @@
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, EmailStr, ConfigDict
+from app.models.user import UserRole
 
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str 
-    role: str = "client"
+    role: UserRole = UserRole.CLIENT
 
 class UserCreate(UserBase):
     password: str
