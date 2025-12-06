@@ -8,6 +8,7 @@ class FoodBase(BaseModel):
     description: str
     enhanced_description: Optional[str] = None
     category: str = Field(..., description="Category: drinks, desserts, main_meals, snacks")
+    price: float = Field(default=0.0, ge=0)
     main_ingredients: List[str] = Field(default_factory=list)
     taste_profile: List[str] = Field(default_factory=list, description="e.g., sweet, spicy, sour, savory, creamy, fresh")
     texture: List[str] = Field(default_factory=list, description="e.g., crispy, soft, chewy, crunchy")
@@ -24,6 +25,7 @@ class FoodUpdate(BaseModel):
     description: str
     enhanced_description: Optional[str] = None
     category: Optional[str] = None
+    price: Optional[float] = Field(None, ge=0)
     main_ingredients: Optional[List[str]] = None
     taste_profile: Optional[List[str]] = None
     texture: Optional[List[str]] = None

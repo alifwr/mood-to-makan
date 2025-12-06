@@ -430,7 +430,6 @@ def generate_food_description(
             }
         }
 
-
 def enhance_food_description(
     current_description: str,
     food_name: str,

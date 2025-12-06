@@ -1,35 +1,54 @@
 <script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+
 definePageMeta({
   layout: 'umkm',
   middleware: ['auth']
 })
 
+const authStore = useAuthStore()
+const router = useRouter()
+
 const form = ref({
   name: '',
   description: '',
   address: '',
-  category: 'restaurant', // Default
-  price_range: '$$'
+  province: '',
+  city: '',
+  latitude: 0,
+  longitude: 0
 })
 
 const isLoading = ref(false)
-const router = useRouter()
 
 const createStore = async () => {
   isLoading.value = true
   try {
-    const { data, error } = await useApi('/stores/', {
+    const payload = {
+      name: form.value.name,
+      description: form.value.description,
+      enhanced_description: "",
+      province: form.value.province,
+      city: form.value.city,
+      address: form.value.address,
+      latitude: form.value.latitude,
+      longitude: form.value.longitude,
+      image_url: "",
+      suggestion: "",
+      suggestion_complete: false,
+      umkm_id: authStore.user?.id
+    }
+
+    const data = await $api('/stores/', {
       method: 'POST',
-      body: form.value
+      body: payload
     })
 
-    if (error.value) throw new Error(error.value.message)
-
-    if (data.value) {
+    if (data) {
       router.push('/umkm')
     }
-  } catch (e) {
-    alert('Failed to create store: ' + e)
+  } catch (e: any) {
+    alert('Failed to create store: ' + (e.data?.detail || e.message))
   } finally {
     isLoading.value = false
   }
@@ -59,21 +78,23 @@ const createStore = async () => {
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-nature-700 mb-1">Kategori</label>
-            <select v-model="form.category" class="w-full px-4 py-3 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none">
-              <option value="restaurant">Restoran</option>
-              <option value="cafe">Kafe</option>
-              <option value="street_food">Kaki Lima</option>
-              <option value="bakery">Roti & Kue</option>
-            </select>
+            <label class="block text-sm font-medium text-nature-700 mb-1">Provinsi</label>
+            <input v-model="form.province" type="text" required class="w-full px-4 py-3 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none" placeholder="Jawa Barat" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-nature-700 mb-1">Kisaran Harga</label>
-            <select v-model="form.price_range" class="w-full px-4 py-3 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none">
-              <option value="$">$ (Murah)</option>
-              <option value="$$">$$ (Sedang)</option>
-              <option value="$$$">$$$ (Mahal)</option>
-            </select>
+            <label class="block text-sm font-medium text-nature-700 mb-1">Kota</label>
+            <input v-model="form.city" type="text" required class="w-full px-4 py-3 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none" placeholder="Bandung" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-nature-700 mb-1">Latitude</label>
+            <input v-model.number="form.latitude" type="number" step="any" class="w-full px-4 py-3 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none" placeholder="-6.9175" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-nature-700 mb-1">Longitude</label>
+            <input v-model.number="form.longitude" type="number" step="any" class="w-full px-4 py-3 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none" placeholder="107.6191" />
           </div>
         </div>
 

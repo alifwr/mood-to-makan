@@ -61,6 +61,7 @@ def list_foods(
     limit: int = Query(100, ge=1, le=100),
     category: Optional[str] = Query(None, description="Filter by category"),
     search: Optional[str] = Query(None, description="Search in name and description"),
+    store_id: Optional[int] = Query(None, description="Filter by store_id"),
 ) -> Any:
     """
     Get list of foods with optional filters.
@@ -69,6 +70,9 @@ def list_foods(
     
     if category:
         query = query.filter(Food.category == category)
+
+    if store_id:
+        query = query.filter(Food.store_id == store_id)
     
     if search:
         search_pattern = f"%{search}%"
@@ -121,7 +125,7 @@ def update_food(
             .filter(
                 Food.id != food_id,  
                 Food.name == new_name,
-                ((Food.store_id != food.store_id) | (Food.store_id == None))
+                ((Food.store_id == food.store_id) | (Food.store_id == None))
             )
             .first()
         )
@@ -129,7 +133,7 @@ def update_food(
         if duplicate:
             raise HTTPException(
                 status_code=400,
-                detail="Food name already used in another store or global list"
+                detail="Food name already exists in this store"
             )
 
     # Update fields normally

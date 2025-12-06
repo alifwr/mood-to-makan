@@ -5,9 +5,10 @@ definePageMeta({
 })
 
 const { data: stores } = await useApi<any[]>('/stores/')
+
 // Filter stores for current user (client-side filtering as per plan)
 const authStore = useAuthStore()
-const myStores = computed(() => stores.value?.filter(s => s.owner_id === authStore.user?.id) || [])
+const myStores = computed(() => stores.value?.filter(s => s.umkm_id === authStore.user?.id) || [])
 </script>
 
 <template>
@@ -43,7 +44,7 @@ const myStores = computed(() => stores.value?.filter(s => s.owner_id === authSto
 
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div v-for="store in myStores" :key="store.id" class="border border-nature-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-          <img :src="store.image_url || 'https://via.placeholder.com/400x200?text=No+Image'" class="w-full h-48 object-cover" />
+          <img :src="(store.image_url && store.image_url !== 'string') ? store.image_url : 'https://via.placeholder.com/400x200?text=No+Image'" class="w-full h-48 object-cover" />
           <div class="p-4">
             <h3 class="font-bold text-lg mb-1">{{ store.name }}</h3>
             <p class="text-sm text-nature-600 line-clamp-2 mb-4">{{ store.description }}</p>

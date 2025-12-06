@@ -15,3 +15,18 @@ export const useApi = <T>(url: string, options: any = {}) => {
 
     return useFetch<T>(url, defaults)
 }
+
+export const $api = <T>(url: string, options: any = {}) => {
+    const config = useRuntimeConfig()
+    const authStore = useAuthStore()
+
+    const defaults = {
+        baseURL: config.public.apiBase,
+        headers: {
+            Authorization: authStore.token ? `Bearer ${authStore.token}` : undefined
+        },
+        ...options
+    }
+
+    return $fetch<T>(url, defaults)
+}
