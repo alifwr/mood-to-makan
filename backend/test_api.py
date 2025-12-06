@@ -665,6 +665,154 @@ def test_user_food_history():
         print(f"  Most Selected Foods : {prefs['most_selected_foods']}")
 
 
+# ========== REVIEWS API TESTS ==========
+
+def test_reviews_api():
+    global auth_token
+    print_section("READ REVIEWS BY STORE TEST")
+
+    # ===============================
+    # 1. Login as Client
+    # ===============================
+    login_data = {
+        "username": "client@gmail.com",
+        "password": "client",
+    }
+
+    url = f"{BASE_URL}/auth/login"
+    response = requests.post(url, data=login_data)
+    print_response(response)
+
+    if response.status_code != 200:
+        print("❌ Login failed")
+        return
+
+    auth_token = response.json()["access_token"]
+    headers = {"Authorization": f"Bearer {auth_token}"}
+
+    # ===============================
+    # 2. Create Store
+    # ===============================
+    store_payload = {
+        "name": "Warung Sederhana",
+        "description": "Authentic Minang food",
+        "address": "Padang Street No. 1",
+        "latitude": -0.9471,
+        "longitude": 100.4172
+    }
+
+    url = f"{BASE_URL}/stores"
+    print_request("POST", url, store_payload)
+    response = requests.post(url, json=store_payload, headers=headers)
+    print_response(response)
+
+    if response.status_code not in [200, 201]:
+        print("❌ Store creation failed")
+        return
+
+    store_id = response.json()["id"]
+    print(f"✅ Created Store ID = {store_id}")
+
+    # ===============================
+    # 3. Create Food (belong to store)
+    # ===============================
+    food_payload = {
+        "name": "Rendang",
+        "description": "Slow cooked beef rendang",
+        "category": "main_meals",
+        "main_ingredients": ["beef", "spices"],
+        "taste_profile": ["savory", "spicy"],
+        "texture": ["tender"],
+        "mood_tags": ["comfort"],
+        "store_id": store_id
+    }
+
+    url = f"{BASE_URL}/foods"
+    print_request("POST", url, food_payload)
+    response = requests.post(url, json=food_payload, headers=headers)
+    print_response(response)
+
+    if response.status_code != 201:
+        print("❌ Food creation failed")
+        return
+
+    food_id_1 = response.json()["id"]
+    
+    food_payload = {
+        "name": "Semur",
+        "description": "Slow cooked beef semur",
+        "category": "main_meals",
+        "main_ingredients": ["beef", "spice"],
+        "taste_profile": ["savory", "sweet"],
+        "texture": ["tender"],
+        "mood_tags": ["comfort"],
+        "store_id": store_id
+    }
+
+    url = f"{BASE_URL}/foods"
+    print_request("POST", url, food_payload)
+    response = requests.post(url, json=food_payload, headers=headers)
+    print_response(response)
+
+    if response.status_code != 201:
+        print("❌ Food creation failed")
+        return
+
+    food_id_2 = response.json()["id"]
+
+    # ===============================
+    # 4. Create Reviews (store-based & food-based)
+    # ===============================
+    url = f"{BASE_URL}/reviews"
+
+    review_payloads = [
+        {
+            "food_id": food_id_2,
+            "store_id": store_id,
+            "rating": 4.5,
+            "comment": "Great service and authentic taste"
+        },
+        {
+            "food_id": food_id_1,
+            "store_id": store_id,
+            "rating": 5.0,
+            "comment": "The rendang is the best in town"
+        }
+    ]
+
+    for i, payload in enumerate(review_payloads, start=1):
+        print_request("POST", url, payload)
+        response = requests.post(url, json=payload, headers=headers)
+        print_response(response)
+        print_result(f"Create Review #{i}", response.status_code == 201)
+
+    # ===============================
+    # 5. READ Reviews by Store
+    # ===============================
+    url = f"{BASE_URL}/reviews/store/{store_id}"
+    print_request("GET", url)
+    response = requests.get(url)
+    print_response(response)
+
+    success = response.status_code == 200
+    print_result("Read Reviews by Store", success)
+
+    if success:
+        reviews = response.json()
+        print(f"✅ Total Reviews for Store {store_id}: {len(reviews)}")
+        for r in reviews:
+            print(f" - ⭐ {r['rating']} | {r['comment']}")
+    
+    # ===============================
+    # 6. Read Reviews by Food
+    # ===============================
+    url = f"{BASE_URL}/reviews/food/{food_id_1}"
+    print_request("GET", url)
+    response = requests.get(url)
+    print_response(response)
+    print_result("Get Reviews by Food", response.status_code == 200)
+
+
 # ========== MAIN TEST RUNNER ==========
 
 def run_all_tests():
@@ -676,11 +824,12 @@ def run_all_tests():
     print(f"\nBase URL: {BASE_URL}")
     
     try:
-        # Run tests in order
+        # Run tests in order, assumption: the database is empty
         test_auth_and_user()
         test_store_full_flow()
         test_food_endpoints()
         test_user_food_history()
+        test_reviews_api()
         
     except requests.exceptions.ConnectionError:
         print("\n❌ ERROR: Could not connect to API server")

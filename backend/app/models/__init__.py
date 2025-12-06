@@ -6,4 +6,3 @@ from app.models.client_badge import ClientBadge
 from app.models.user_food_history import UserFoodHistory
 from app.models.promotional_keyword import PromotionalKeyword
 from app.models.problem_category import ProblemCategory
-from app.models.review_analysis import ReviewAnalysis
