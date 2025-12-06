@@ -18,14 +18,14 @@ llm = None
 if settings.OPENROUTER_API_KEY:
     try:
         embeddings = OpenAIEmbeddings(
-            openai_api_key=settings.OPENROUTER_API_KEY,
-            openai_api_base="https://openrouter.ai/api/v1",
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1",
             model=settings.OPENROUTER_EMBEDDING_MODEL
         )
         llm = ChatOpenAI(
-            openai_api_key=settings.OPENROUTER_API_KEY,
-            openai_api_base="https://openrouter.ai/api/v1",
-            model_name=settings.OPENROUTER_MODEL
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1",
+            model=settings.OPENROUTER_MODEL
         )
         print("✅ AI Service initialized with OpenRouter")
     except Exception as e:
@@ -205,7 +205,7 @@ def recommend_foods_by_mood(mood_description: str, db: Session,
     food_context = "\n".join([
         f"- {f.name} ({f.category}): {f.description or 'No description'}\n"
         f"  Taste: {', '.join(f.taste_profile)}, Texture: {', '.join(f.texture)}\n"
-        f"  Mood tags: {', '.join(f.mood_tags)}"
+        f"  Mood tags: {', '.join(f.mood_tags or [])}"
         for f in relevant_foods[:10]
     ])
     
