@@ -16,10 +16,7 @@ from app.models.review import Review
 from app.models.client_badge import ClientBadge
 from app.models.user_food_history import UserFoodHistory
 from app.core.security import get_password_hash
-
-# Helper to generate dummy embeddings
-def get_dummy_embedding(dim=1536):
-    return [random.random() for _ in range(dim)]
+from app.services.ai_service import generate_embedding
 
 def seed_users(db: Session):
     print("Seeding Users...")
@@ -123,7 +120,7 @@ def seed_stores(db: Session):
                 latitude=data["latitude"],
                 longitude=data["longitude"],
                 image_url=f"https://placehold.co/600x400?text={data['name'].replace(' ', '+')}",
-                embedding=get_dummy_embedding(),
+                embedding=generate_embedding(f"{data['name']} {data['description']} {data['province']} {data['city']}"),
                 is_valid_store=True
             )
             db.add(store)
@@ -198,7 +195,7 @@ def seed_foods(db: Session):
                     texture=food_data["texture"],
                     mood_tags=food_data["mood_tags"],
                     image_url=f"https://placehold.co/400x300?text={food_data['name'].replace(' ', '+')}",
-                    embedding=get_dummy_embedding(),
+                    embedding=generate_embedding(f"{food_data['name']} {food_data['description']} {food_data['category']} {' '.join(food_data['taste_profile'])}"),
                     is_valid_food=True
                 )
                 db.add(food)
@@ -237,7 +234,7 @@ def seed_reviews(db: Session):
             food_id=food.id,
             rating=random.randint(3, 5), # Mostly positive reviews
             comment=random.choice(comments),
-            embedding=get_dummy_embedding()
+            embedding=generate_embedding(random.choice(comments))
         )
         db.add(review)
     
