@@ -6,11 +6,19 @@ definePageMeta({
 const query = ref('')
 const searchResults = ref<any[]>([])
 const isSearching = ref(false)
+const authStore = useAuthStore()
+const { addToast } = useToast()
 
 // Initial fetch of all stores
 const { data: allStores } = await useApi<any[]>('/stores/')
 
 const handleSearch = async () => {
+  if (!authStore.isAuthenticated) {
+    addToast('Silakan login terlebih dahulu untuk menggunakan fitur AI Search', 'warning')
+    navigateTo('/auth/login/client')
+    return
+  }
+
   if (!query.value) {
     searchResults.value = []
     return
