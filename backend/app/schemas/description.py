@@ -38,12 +38,3 @@ class DescriptionResponse(BaseModel):
 
 class EnhancedDescriptionResponse(BaseModel):
     enhanced_description: str = Field(..., description="The enhanced description")
-
-
-class PromotionalKeywordsResponse(BaseModel):
-    category: str
-    selling_points: List[str] = Field(default_factory=list)
-    flavors: List[str] = Field(default_factory=list)
-    textures: List[str] = Field(default_factory=list)
-    moods: List[str] = Field(default_factory=list)
-    general: List[str] = Field(default_factory=list)

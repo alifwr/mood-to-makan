@@ -50,8 +50,6 @@ if not llm:
     print("⚠️ No AI provider configured. Set either OPENROUTER_API_KEY or GEMINI_API_KEY in .env")
 
 
-
-
 def generate_embedding(text_content: str) -> List[float]:
     """Generate embedding vector, padding to 1536 dimensions if needed"""
     if not embeddings:
@@ -77,18 +75,10 @@ def generate_embedding(text_content: str) -> List[float]:
         return [0.0] * 1536
 
 
-def search_stores_by_vector(query: str, db, limit: int = 5):
+# ========== STORE-SPECIFIC FUNCTIONS ==========
+
+def search_stores_by_vector(query: str, db, limit: int = 3):
     query_vector = generate_embedding(query)
-    
-    # pgvector search using cosine distance (<=>)
-    # We search both stores and products? 
-    # Let's start with Stores.
-    
-    # SQL alchemy with pgvector
-    # Note: We need to cast the list to a vector string representation for raw SQL if needed,
-    # or use the ORM's order_by with the operator.
-    
-    # Using ORM:
     stores = db.query(Store).order_by(
         Store.embedding.cosine_distance(query_vector)
     ).limit(limit).all()
@@ -141,7 +131,7 @@ def generate_food_embedding(food_data: dict) -> List[float]:
     return generate_embedding(combined_text)
 
 
-def search_foods_by_vector(query: str, db: Session, limit: int = 10, 
+def search_foods_by_vector(query: str, db: Session, limit: int = 5, 
                            category: Optional[str] = None,
                            max_calories: Optional[float] = None) -> List[Food]:
     """Search foods using vector similarity"""
@@ -176,7 +166,7 @@ def search_foods_by_vector(query: str, db: Session, limit: int = 10,
 
 def recommend_foods_by_mood(mood_description: str, db: Session, 
                             user_id: Optional[int] = None,
-                            limit: int = 10) -> dict:
+                            limit: int = 5) -> dict:
     """Get AI-powered food recommendations based on mood/preferences"""
     if not llm:
         # Fallback to vector search only
@@ -187,14 +177,14 @@ def recommend_foods_by_mood(mood_description: str, db: Session,
         }
     
     # 1. Get relevant foods using vector search
-    relevant_foods = search_foods_by_vector(mood_description, db, limit=20)
+    relevant_foods = search_foods_by_vector(mood_description, db, limit=5)
     
     # 2. Get user history if available
     user_context = ""
     if user_id:
         user_history = db.query(UserFoodHistory).filter(
             UserFoodHistory.user_id == user_id
-        ).order_by(UserFoodHistory.created_at.desc()).limit(10).all()
+        ).order_by(UserFoodHistory.created_at.desc()).limit(5).all()
         
         if user_history:
             liked_foods = [h.food.name for h in user_history if h.rating and h.rating >= 4]
@@ -326,17 +316,7 @@ def generate_food_description(
             "long_description": f"{name} is a wonderful {category.replace('_', ' ')} that you'll love.",
             "selling_points": selling_points or [],
             "flavor_characteristics": {}
-        }
-    
-    # Get promotional keywords if db is available
-    promotional_keywords = []
-    if db:
-        from app.models.promotional_keyword import PromotionalKeyword
-        keywords_data = db.query(PromotionalKeyword).filter(
-            PromotionalKeyword.category.in_([category, "all"])
-        ).all()
-        for kw in keywords_data:
-            promotional_keywords.extend(kw.keywords)
+        }  
     
     # Build context
     context_parts = [f"Food Name: {name}", f"Category: {category.replace('_', ' ')}"]
@@ -419,9 +399,9 @@ def generate_food_description(
     try:
         result = chain.invoke({
             "context": context,
-            "keywords": ", ".join(promotional_keywords[:15]) if promotional_keywords else "N/A",
             "style_instruction": style_instruction,
-            "language": language
+            "language": language,
+            "keywords": ""  # Add keywords parameter for template
         })
         
         # Parse JSON response
@@ -449,7 +429,6 @@ def generate_food_description(
                 "aroma_notes": "Aromatic and inviting"
             }
         }
-
 
 def enhance_food_description(
     current_description: str,
@@ -508,394 +487,3 @@ def enhance_food_description(
     except Exception as e:
         print(f"Enhancement error: {e}")
         return current_description
-
-
-def generate_description_from_image(
-    image_data: bytes,
-    name: str,
-    category: str,
-    region: Optional[str] = None,
-    style: str = "promotional"
-) -> dict:
-    """
-    Generate food description from an image using vision-capable LLM.
-    Note: Requires vision-capable model like GPT-4 Vision or Gemini Vision.
-    """
-    # This is a placeholder - actual implementation would use vision models
-    # For now, return a basic description
-    if not llm:
-        return {
-            "short_description": f"{name} - A delicious {category.replace('_', ' ')}",
-            "long_description": f"This appetizing {name} looks absolutely delicious.",
-            "selling_points": ["Visually appealing", "Fresh ingredients", "Expertly presented"],
-            "flavor_characteristics": {}
-        }
-    
-    # TODO: Implement actual vision model integration
-    # This would involve:
-    # 1. Encoding image to base64
-    # 2. Using vision-capable model (GPT-4V, Gemini Vision, etc.)
-    # 3. Analyzing the image for ingredients, presentation, colors, etc.
-    # 4. Generating description based on visual analysis
-    
-    return {
-        "short_description": f"Beautifully presented {name} that looks as good as it tastes",
-        "long_description": f"This stunning {name} showcases the artistry of {region or 'our'} cuisine. The careful presentation and vibrant colors promise a delightful culinary experience.",
-        "selling_points": ["Instagram-worthy presentation", "Fresh, quality ingredients", "Authentic preparation"],
-        "flavor_characteristics": {
-            "primary_flavors": [],
-            "secondary_flavors": [],
-            "texture_description": "Appealing texture",
-            "aroma_notes": "Aromatic"
-        },
-        "note": "Image analysis feature coming soon - using basic description for now"
-    }
-
-
-def get_promotional_keywords_for_category(category: str, db: Session) -> dict:
-    """
-    Retrieve promotional keywords grouped by type for a specific category.
-    """
-    from app.models.promotional_keyword import PromotionalKeyword
-    
-    keywords_data = db.query(PromotionalKeyword).filter(
-        PromotionalKeyword.category.in_([category, "all"])
-    ).all()
-    
-    grouped = {
-        "selling_points": [],
-        "flavors": [],
-        "textures": [],
-        "moods": [],
-        "general": []
-    }
-    
-    for kw in keywords_data:
-        keyword_type = kw.keyword_type
-        if keyword_type == "selling_point":
-            grouped["selling_points"].extend(kw.keywords)
-        elif keyword_type == "flavor":
-            grouped["flavors"].extend(kw.keywords)
-        elif keyword_type == "texture":
-            grouped["textures"].extend(kw.keywords)
-        elif keyword_type == "mood":
-            grouped["moods"].extend(kw.keywords)
-        else:
-            grouped["general"].extend(kw.keywords)
-    
-    return grouped
-
-
-# ========== REVIEW ANALYSIS FUNCTIONS ==========
-
-def analyze_review_sentiment(review_text: str, rating: int) -> dict:
-    """
-    Analyze sentiment of a review using AI.
-    Returns sentiment score, label, and confidence.
-    """
-    if not llm:
-        # Fallback based on rating
-        if rating >= 4:
-            return {"score": 0.7, "label": "positive", "confidence": 0.6}
-        elif rating <= 2:
-            return {"score": -0.7, "label": "negative", "confidence": 0.6}
-        else:
-            return {"score": 0.0, "label": "neutral", "confidence": 0.6}
-    
-    prompt = ChatPromptTemplate.from_template("""
-    Analyze the sentiment of this customer review.
-    
-    Review Text: {review_text}
-    Rating: {rating}/5
-    
-    Provide sentiment analysis in JSON format:
-    {{
-        "score": <float from -1.0 (very negative) to 1.0 (very positive)>,
-        "label": "<positive|neutral|negative>",
-        "confidence": <float from 0.0 to 1.0>,
-        "reasoning": "<brief explanation>"
-    }}
-    
-    Consider both the text and the rating. The score should reflect the overall sentiment.
-    """)
-    
-    chain = prompt | llm | StrOutputParser()
-    
-    try:
-        result = chain.invoke({"review_text": review_text, "rating": rating})
-        
-        import json
-        if "```json" in result:
-            result = result.split("```json")[1].split("```")[0].strip()
-        elif "```" in result:
-            result = result.split("```")[1].split("```")[0].strip()
-        
-        parsed = json.loads(result)
-        return parsed
-    except Exception as e:
-        print(f"Sentiment analysis error: {e}")
-        # Fallback
-        score = (rating - 3) / 2  # Convert 1-5 rating to -1 to 1 scale
-        label = "positive" if score > 0.3 else ("negative" if score < -0.3 else "neutral")
-        return {"score": score, "label": label, "confidence": 0.5}
-
-
-def categorize_review_problems(review_text: str, rating: int, db: Session) -> list:
-    """
-    Identify problem categories in a review.
-    Returns list of detected problems with severity and confidence.
-    """
-    from app.models.problem_category import ProblemCategory
-    
-    # Get active problem categories
-    categories = db.query(ProblemCategory).filter(ProblemCategory.is_active == True).all()
-    
-    if not categories or not llm:
-        return []
-    
-    # Build category descriptions
-    category_info = "\n".join([
-        f"- {cat.category_key}: {cat.description} (Keywords: {', '.join(cat.keywords[:5])})"
-        for cat in categories
-    ])
-    
-    prompt = ChatPromptTemplate.from_template("""
-    Analyze this customer review and identify any problems mentioned.
-    
-    Review Text: {review_text}
-    Rating: {rating}/5
-    
-    Available Problem Categories:
-    {categories}
-    
-    For each problem you detect, provide:
-    - category: the category_key
-    - severity: 0.0 to 1.0 (how serious the problem is)
-    - confidence: 0.0 to 1.0 (how confident you are)
-    - evidence: the specific text that indicates this problem
-    
-    Return as JSON array:
-    [
-        {{
-            "category": "category_key",
-            "severity": 0.8,
-            "confidence": 0.9,
-            "evidence": "relevant quote from review"
-        }}
-    ]
-    
-    If no problems are detected, return an empty array [].
-    Only include problems that are clearly mentioned or strongly implied.
-    """)
-    
-    chain = prompt | llm | StrOutputParser()
-    
-    try:
-        result = chain.invoke({
-            "review_text": review_text,
-            "rating": rating,
-            "categories": category_info
-        })
-        
-        import json
-        if "```json" in result:
-            result = result.split("```json")[1].split("```")[0].strip()
-        elif "```" in result:
-            result = result.split("```")[1].split("```")[0].strip()
-        
-        problems = json.loads(result)
-        
-        # Add category names
-        category_map = {cat.category_key: cat.name for cat in categories}
-        for problem in problems:
-            problem["category_name"] = category_map.get(problem["category"], problem["category"])
-        
-        return problems
-    except Exception as e:
-        print(f"Problem categorization error: {e}")
-        return []
-
-
-def extract_review_topics(review_text: str) -> list:
-    """
-    Extract key topics/themes from a review.
-    """
-    if not llm:
-        return []
-    
-    prompt = ChatPromptTemplate.from_template("""
-    Extract the main topics or themes discussed in this review.
-    
-    Review: {review_text}
-    
-    Return 3-5 key topics as a JSON array of strings.
-    Topics should be short phrases (2-4 words each).
-    
-    Example: ["food quality", "delivery time", "packaging", "customer service"]
-    
-    Return only the JSON array, nothing else.
-    """)
-    
-    chain = prompt | llm | StrOutputParser()
-    
-    try:
-        result = chain.invoke({"review_text": review_text})
-        
-        import json
-        if "```json" in result:
-            result = result.split("```json")[1].split("```")[0].strip()
-        elif "```" in result:
-            result = result.split("```")[1].split("```")[0].strip()
-        elif "[" in result:
-            # Extract just the array
-            start = result.find("[")
-            end = result.rfind("]") + 1
-            result = result[start:end]
-        
-        topics = json.loads(result)
-        return topics if isinstance(topics, list) else []
-    except Exception as e:
-        print(f"Topic extraction error: {e}")
-        return []
-
-
-def generate_improvement_suggestions(problems: list, db: Session) -> list:
-    """
-    Generate actionable improvement suggestions based on detected problems.
-    """
-    from app.models.problem_category import ProblemCategory
-    
-    if not problems or not llm:
-        return []
-    
-    # Get problem category details
-    category_keys = [p["category"] for p in problems]
-    categories = db.query(ProblemCategory).filter(
-        ProblemCategory.category_key.in_(category_keys)
-    ).all()
-    
-    category_map = {cat.category_key: cat for cat in categories}
-    
-    # Build context
-    problem_context = "\n".join([
-        f"- {p['category']}: Severity {p['severity']:.1f}, Evidence: \"{p.get('evidence', 'N/A')}\""
-        for p in problems
-    ])
-    
-    prompt = ChatPromptTemplate.from_template("""
-    Based on these problems detected in customer reviews, generate specific, actionable improvement suggestions.
-    
-    Problems Detected:
-    {problems}
-    
-    For each problem, provide:
-    - A specific, actionable suggestion
-    - Priority level (high/medium/low)
-    - Expected impact if implemented
-    
-    Return as JSON array:
-    [
-        {{
-            "problem": "category_key",
-            "suggestion": "Specific action to take",
-            "priority": "high",
-            "expected_impact": "What will improve"
-        }}
-    ]
-    
-    Make suggestions practical and specific to the food/restaurant business.
-    """)
-    
-    chain = prompt | llm | StrOutputParser()
-    
-    try:
-        result = chain.invoke({"problems": problem_context})
-        
-        import json
-        if "```json" in result:
-            result = result.split("```json")[1].split("```")[0].strip()
-        elif "```" in result:
-            result = result.split("```")[1].split("```")[0].strip()
-        
-        suggestions = json.loads(result)
-        return suggestions if isinstance(suggestions, list) else []
-    except Exception as e:
-        print(f"Suggestion generation error: {e}")
-        # Fallback suggestions
-        return [
-            {
-                "problem": p["category"],
-                "suggestion": f"Address {p['category'].replace('_', ' ')} issues mentioned in reviews",
-                "priority": "high" if p["severity"] > 0.7 else "medium",
-                "expected_impact": "Improved customer satisfaction"
-            }
-            for p in problems
-        ]
-
-
-# def aggregate_store_insights(store_id: int, db: Session, days: Optional[int] = None) -> dict:
-#     """
-#     Aggregate insights from all reviews for a store.
-#     """
-#     from app.models.review import Review
-#     from app.models.review_analysis import ReviewAnalysis
-#     from app.models.store import Store
-#     from datetime import datetime, timedelta
-    
-#     store = db.query(Store).filter(Store.id == store_id).first()
-#     if not store:
-#         return {}
-    
-#     # Build query
-#     query = db.query(Review).filter(Review.store_id == store_id)
-    
-#     if days:
-#         cutoff_date = datetime.utcnow() - timedelta(days=days)
-#         query = query.filter(Review.created_at >= cutoff_date)
-    
-#     reviews = query.all()
-    
-#     if not reviews:
-#         return {
-#             "store_id": store_id,
-#             "store_name": store.name,
-#             "total_reviews": 0,
-#             "message": "No reviews found"
-#         }
-    
-#     # Calculate metrics
-#     total_reviews = len(reviews)
-#     average_rating = sum(r.rating for r in reviews) / total_reviews
-    
-#     # Sentiment distribution
-#     sentiment_dist = {"positive": 0, "neutral": 0, "negative": 0, "total": total_reviews}
-#     for review in reviews:
-#         if review.sentiment_label:
-#             sentiment_dist[review.sentiment_label] = sentiment_dist.get(review.sentiment_label, 0) + 1
-    
-#     # Aggregate problems
-#     problem_counts = {}
-#     for review in reviews:
-#         analysis = db.query(ReviewAnalysis).filter(ReviewAnalysis.review_id == review.id).first()
-#         if analysis and analysis.detected_problems:
-#             for problem_key in analysis.detected_problems:
-#                 problem_counts[problem_key] = problem_counts.get(problem_key, 0) + 1
-    
-#     # Top problems
-#     top_problems = [
-#         {
-#             "category": cat,
-#             "occurrences": count,
-#             "percentage": (count / total_reviews) * 100
-#         }
-#         for cat, count in sorted(problem_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-#     ]
-    
-#     return {
-#         "store_id": store_id,
-#         "store_name": store.name,
-#         "total_reviews": total_reviews,
-#         "average_rating": round(average_rating, 2),
-#         "sentiment_distribution": sentiment_dist,
-#         "top_problems": top_problems
-#     }
