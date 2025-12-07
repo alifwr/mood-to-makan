@@ -33,42 +33,29 @@
         </div>
 
         <BentoGrid>
-          <BentoItem 
-            title="Jajanan Jadul" 
-            description="Resep turun-temurun yang bikin kangen."
-            span="2x2"
-            theme="colored"
-            image="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-            action="Cek Jajanan"
-          />
-          <BentoItem 
-            title="Jagoan Kaki Lima" 
-            description="Rasa bintang lima, harga kaki lima."
-            span="1x1"
-            theme="light"
-            icon="🍜"
-          />
-          <BentoItem 
-            title="Manis-Manis" 
-            description="Dessert kece buat naikin mood kamu."
-            span="1x2"
-            theme="dark"
-            action="Lihat Dessert"
-          />
-          <BentoItem 
-            title="Menu Sehat" 
-            description="Makan enak tetep sehat, gas!"
-            span="1x1"
-            theme="light"
-            icon="🥗"
-          />
-          <BentoItem 
-            title="Ngopi Santuy" 
-            description="Tempat asik buat ngopi dan nongkrong."
-            span="2x1"
-            theme="colored"
-            action="Cari Kafe"
-          />
+          <NuxtLink 
+            v-for="item in bentoItems" 
+            :key="item.id" 
+            :to="`/foods/${item.id}`"
+            :class="{
+              'col-span-1 row-span-1': item.span === '1x1',
+              'col-span-1 row-span-2': item.span === '1x2',
+              'col-span-1 md:col-span-2 row-span-1': item.span === '2x1',
+              'col-span-1 md:col-span-2 row-span-2': item.span === '2x2',
+              'col-span-1 md:col-span-3 row-span-1': item.span === '3x1',
+            }"
+          >
+            <BentoItem 
+              :title="item.title" 
+              :description="item.description"
+              :span="item.span"
+              :theme="item.theme"
+              :image="item.image"
+              :action="item.action"
+              :icon="item.icon"
+              class="h-full w-full"
+            />
+          </NuxtLink>
         </BentoGrid>
       </div>
     </section>
@@ -97,6 +84,51 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'default'
+})
+
+const authStore = useAuthStore()
+
+const { data: recommendations } = await useAsyncData('home-recommendations', async () => {
+  try {
+    if (authStore.isAuthenticated) {
+      const res = await $api<any>('/ai/personalized-recommendations?limit=5')
+      return res.recommendations || []
+    } else {
+      // Fallback to generic foods for guests
+      const res = await $api<any[]>('/foods/?limit=5')
+      return res || []
+    }
+  } catch (e) {
+    console.error('Failed to fetch recommendations', e)
+    return []
+  }
+})
+
+const getIconForCategory = (category: string) => {
+  const icons: Record<string, string> = {
+    'main_meals': '🍛',
+    'desserts': '🍰',
+    'drinks': '🥤',
+    'snacks': '🍟'
+  }
+  return icons[category] || '🍽️'
+}
+
+const bentoItems = computed(() => {
+  const items = recommendations.value || []
+  const spans = ['2x2', '1x1', '1x2', '1x1', '2x1']
+  const themes = ['colored', 'light', 'dark', 'light', 'colored']
+  
+  return items.map((item: any, index: number) => ({
+    id: item.id,
+    title: item.name,
+    description: item.description,
+    image: item.image_url,
+    span: spans[index % spans.length],
+    theme: themes[index % themes.length],
+    action: 'Lihat Detail',
+    icon: getIconForCategory(item.category)
+  }))
 })
 </script>
 
