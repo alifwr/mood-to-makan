@@ -103,45 +103,8 @@ const updateStore = async () => {
 }
 
 // --- Edit Food Logic ---
-const isEditingFood = ref(false)
-const editingFoodId = ref<number | null>(null)
-const editFoodForm = ref({
-  name: '',
-  description: '',
-  price: 0,
-  category: 'main_course',
-  is_available: true
-})
-
 const openEditFood = (food: any) => {
-  editingFoodId.value = food.id
-  editFoodForm.value = {
-    name: food.name,
-    description: food.description,
-    price: food.price,
-    category: food.category,
-    is_available: food.is_available ?? true
-  }
-  isEditingFood.value = true
-}
-
-const updateFood = async () => {
-  if (!editingFoodId.value) return
-  try {
-    await $api(`/foods/${editingFoodId.value}`, {
-      method: 'PUT',
-      body: {
-        ...editFoodForm.value,
-        store_id: parseInt(storeId as string)
-      }
-    })
-
-    await refreshFoods()
-    isEditingFood.value = false
-    editingFoodId.value = null
-  } catch (e: any) {
-    alert('Gagal update menu: ' + (e.data?.detail || e.message))
-  }
+  router.push(`/umkm/foods/${food.id}/edit`)
 }
 
 // --- Image Upload Logic ---
@@ -280,33 +243,6 @@ const handleImageUpload = async (event: Event) => {
           <button type="submit" class="px-4 py-2 bg-leaf-600 text-white rounded-lg">Simpan Menu</button>
         </div>
       </form>
-    </div>
-
-    <!-- Edit Food Modal -->
-    <div v-if="isEditingFood" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl w-full max-w-lg p-6">
-        <h3 class="text-xl font-bold mb-4">Edit Menu</h3>
-        <form @submit.prevent="updateFood" class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-nature-700 mb-1">Nama Menu</label>
-              <input v-model="editFoodForm.name" type="text" required class="w-full px-4 py-2 rounded-lg border border-nature-200" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-nature-700 mb-1">Harga</label>
-              <input v-model.number="editFoodForm.price" type="number" required class="w-full px-4 py-2 rounded-lg border border-nature-200" />
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-nature-700 mb-1">Deskripsi</label>
-            <textarea v-model="editFoodForm.description" rows="3" class="w-full px-4 py-2 rounded-lg border border-nature-200"></textarea>
-          </div>
-          <div class="flex justify-end space-x-3 pt-4">
-            <button type="button" @click="isEditingFood = false" class="px-4 py-2 text-nature-600 hover:bg-nature-50 rounded-lg">Batal</button>
-            <button type="submit" class="px-4 py-2 bg-leaf-600 text-white rounded-lg hover:bg-leaf-500">Simpan Perubahan</button>
-          </div>
-        </form>
-      </div>
     </div>
 
     <!-- Food List -->

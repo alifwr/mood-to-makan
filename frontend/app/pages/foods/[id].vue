@@ -8,7 +8,7 @@ const foodId = route.params.id
 
 const { data: food } = await useApi<any>(`/foods/${foodId}`)
 const { data: reviews, refresh: refreshReviews } = await useApi<any[]>(`/reviews/food/${foodId}`)
-
+console.log(food.value)
 const authStore = useAuthStore()
 const newReview = ref({
   rating: 5,
@@ -80,6 +80,14 @@ const submitReview = async () => {
           <div class="flex flex-wrap gap-2">
             <span v-for="texture in food.texture" :key="texture" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
               {{ texture }}
+            </span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-nature-100">
+          <h3 class="font-bold text-lg text-nature-900 mb-4">Mood Tags</h3>
+          <div class="flex flex-wrap gap-2">
+            <span v-for="mood in food.mood_tags" :key="mood" class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+              {{ mood }}
             </span>
           </div>
         </div>
