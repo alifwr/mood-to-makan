@@ -4,10 +4,9 @@ definePageMeta({
 })
 
 const query = ref('')
-const searchResults = ref<any[]>([])
-const isSearching = ref(false)
 const authStore = useAuthStore()
 const { addToast } = useToast()
+const router = useRouter()
 
 // Initial fetch of all stores
 const { data: allStores } = await useApi<any[]>('/stores/')
@@ -19,28 +18,15 @@ const handleSearch = async () => {
     return
   }
 
-  if (!query.value) {
-    searchResults.value = []
-    return
-  }
+  if (!query.value) return
 
-  isSearching.value = true
-  try {
-    const { data } = await useApi<any[]>('/ai/search', {
-      method: 'POST',
-      query: { query: query.value }
-    })
-    searchResults.value = data.value || []
-  } catch (e) {
-    console.error(e)
-  } finally {
-    isSearching.value = false
-  }
+  router.push({
+    path: '/search/results',
+    query: { q: query.value }
+  })
 }
 
-const displayStores = computed(() => {
-  return searchResults.value.length > 0 ? searchResults.value : (allStores.value || [])
-})
+const displayStores = computed(() => allStores.value || [])
 </script>
 
 <template>
