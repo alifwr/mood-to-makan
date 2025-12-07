@@ -10,6 +10,6 @@ export default defineNuxtConfig({
     }
   },
   routeRules: {
-    '/api/**': { proxy: 'http://localhost:8000/api/v1/**' }
+    '/api/**': { proxy: `${process.env.API_URL || 'http://localhost:8000/api/v1'}/**` }
   }
 })
