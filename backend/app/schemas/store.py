@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 
 class StoreBase(BaseModel):
@@ -17,9 +17,9 @@ class StoreBase(BaseModel):
 
 
 class StoreCreate(StoreBase):
-    province: str
-    city: str
-    description: str
+    province: Optional[str] = Field(default="string")
+    city: Optional[str] = Field(default="string")
+    description: Optional[str] = Field(default="string")
     umkm_id: Optional[int] = None
 
 

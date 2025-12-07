@@ -24,17 +24,13 @@ const handleLogin = async () => {
     formData.append('username', form.value.username)
     formData.append('password', form.value.password)
 
-    const { data, error } = await useApi<any>('/auth/login', {
+    const data = await $api<any>('/auth/login', {
       method: 'POST',
       body: formData
     })
 
-    if (error.value) {
-      throw new Error(error.value.data?.detail || 'Login failed')
-    }
-
-    if (data.value) {
-      authStore.setToken(data.value.access_token)
+    if (data) {
+      authStore.setToken(data.access_token)
       await authStore.fetchUser()
 
       // Check if user is actually UMKM
@@ -45,7 +41,7 @@ const handleLogin = async () => {
       router.push('/umkm')
     }
   } catch (e: any) {
-    errorMsg.value = e.message
+    errorMsg.value = e.data?.detail || e.message || 'Login failed'
   } finally {
     isLoading.value = false
   }

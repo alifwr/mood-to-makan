@@ -4,17 +4,15 @@ definePageMeta({
 })
 
 const route = useRoute()
-const storeId = route.params.id
+const foodId = route.params.id
 
-const { data: store } = await useApi<any>(`/stores/${storeId}`)
-const { data: foods } = await useApi<any[]>(`/foods/?store_id=${storeId}`)
-const { data: reviews, refresh: refreshReviews } = await useApi<any[]>(`/reviews/store/${storeId}`)
+const { data: food } = await useApi<any>(`/foods/${foodId}`)
+const { data: reviews, refresh: refreshReviews } = await useApi<any[]>(`/reviews/food/${foodId}`)
 
 const authStore = useAuthStore()
 const newReview = ref({
   rating: 5,
-  comment: '',
-  food_id: null as number | null
+  comment: ''
 })
 const isSubmittingReview = ref(false)
 
@@ -31,13 +29,13 @@ const submitReview = async () => {
       body: {
         rating: newReview.value.rating,
         comment: newReview.value.comment,
-        store_id: parseInt(storeId as string),
-        food_id: newReview.value.food_id
+        store_id: food.value.store_id,
+        food_id: parseInt(foodId as string)
       }
     })
 
     await refreshReviews()
-    newReview.value = { rating: 5, comment: '', food_id: null }
+    newReview.value = { rating: 5, comment: '' }
   } catch (e) {
     alert('Failed to submit review: ' + e)
   } finally {
@@ -47,46 +45,50 @@ const submitReview = async () => {
 </script>
 
 <template>
-  <div v-if="store" class="pb-20">
+  <div v-if="food" class="pb-20">
     <!-- Hero Banner -->
-    <div class="relative h-[50vh] min-h-[400px] rounded-3xl overflow-hidden mb-12">
-      <img :src="store.image_url || 'https://via.placeholder.com/1200x600'" class="w-full h-full object-cover" />
+    <div class="relative h-[40vh] min-h-[300px] rounded-3xl overflow-hidden mb-12">
+      <img :src="food.image_url || 'https://via.placeholder.com/1200x600'" class="w-full h-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-t from-nature-900/80 via-nature-900/20 to-transparent"></div>
       <div class="absolute bottom-0 left-0 right-0 p-8 md:p-12 text-white">
         <div class="max-w-4xl mx-auto">
           <div class="flex items-center gap-4 mb-4">
-            <span class="px-3 py-1 bg-leaf-500 rounded-full text-xs font-bold uppercase tracking-wider">{{ store.category }}</span>
-            <span class="text-white/80">{{ store.price_range }}</span>
+            <span class="px-3 py-1 bg-leaf-500 rounded-full text-xs font-bold uppercase tracking-wider">{{ food.category }}</span>
           </div>
-          <h1 class="text-5xl md:text-6xl font-serif font-bold mb-4">{{ store.name }}</h1>
-          <p class="text-xl text-white/90 max-w-2xl">{{ store.description }}</p>
-          <div class="mt-6 flex items-center gap-2 text-white/80">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            {{ store.address }}
+          <h1 class="text-4xl md:text-5xl font-serif font-bold mb-4">{{ food.name }}</h1>
+          <p class="text-xl text-white/90 max-w-2xl">{{ food.description }}</p>
+          <div class="mt-6 text-2xl font-bold text-leaf-400">
+            Rp {{ food.price.toLocaleString() }}
           </div>
         </div>
       </div>
     </div>
 
     <div class="max-w-4xl mx-auto px-6">
-      <!-- Menu Section -->
-      <section class="mb-16">
-        <h2 class="text-3xl font-serif font-bold text-nature-900 mb-8 flex items-center gap-3">
-          <span class="text-4xl">📜</span> Menu
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div v-for="food in foods" :key="food.id" class="bg-white p-4 rounded-2xl border border-nature-100 flex gap-4 hover:shadow-md transition-shadow">
-            <img :src="food.image_url || 'https://via.placeholder.com/150'" class="w-24 h-24 rounded-xl object-cover bg-nature-100" />
-            <div class="flex-1">
-              <div class="flex justify-between items-start mb-1">
-                <h3 class="font-bold text-lg text-nature-900">{{ food.name }}</h3>
-                <span class="font-bold text-leaf-600">Rp {{ food.price.toLocaleString() }}</span>
-              </div>
-              <p class="text-sm text-nature-600 line-clamp-2 mb-2">{{ food.description }}</p>
-              <NuxtLink :to="`/foods/${food.id}`" class="text-sm font-medium text-leaf-600 hover:text-leaf-700 hover:underline">
-                Lihat Detail →
-              </NuxtLink>
-            </div>
+      <!-- Details Section -->
+      <section class="mb-16 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-2xl border border-nature-100">
+          <h3 class="font-bold text-lg text-nature-900 mb-4">Taste Profile</h3>
+          <div class="flex flex-wrap gap-2">
+            <span v-for="taste in food.taste_profile" :key="taste" class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+              {{ taste }}
+            </span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-nature-100">
+          <h3 class="font-bold text-lg text-nature-900 mb-4">Texture</h3>
+          <div class="flex flex-wrap gap-2">
+            <span v-for="texture in food.texture" :key="texture" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+              {{ texture }}
+            </span>
+          </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-nature-100 md:col-span-2">
+          <h3 class="font-bold text-lg text-nature-900 mb-4">Main Ingredients</h3>
+          <div class="flex flex-wrap gap-2">
+            <span v-for="ingredient in food.main_ingredients" :key="ingredient" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+              {{ ingredient }}
+            </span>
           </div>
         </div>
       </section>
@@ -101,16 +103,6 @@ const submitReview = async () => {
         <div class="bg-nature-50 p-6 rounded-2xl border border-nature-100 mb-8">
           <h3 class="font-bold text-lg mb-4">Write a Review</h3>
           <form @submit.prevent="submitReview" class="space-y-4">
-            <div>
-              <label class="text-sm font-medium block mb-1 text-nature-700">Review for (Optional):</label>
-              <select v-model="newReview.food_id" class="w-full px-4 py-2 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none bg-white">
-                <option :value="null">Store (General)</option>
-                <option v-for="food in foods" :key="food.id" :value="food.id">
-                  {{ food.name }}
-                </option>
-              </select>
-            </div>
-
             <div class="flex items-center gap-4">
               <label class="text-sm font-medium">Rating:</label>
               <div class="flex gap-2">
@@ -134,7 +126,7 @@ const submitReview = async () => {
             <div class="flex justify-between items-start mb-4">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-nature-200 flex items-center justify-center font-bold text-nature-600">
-                  {{ review.user_id }} <!-- Should fetch user name if possible, or backend should populate -->
+                  {{ review.user_id }}
                 </div>
                 <div>
                   <div class="font-bold text-nature-900">User #{{ review.user_id }}</div>

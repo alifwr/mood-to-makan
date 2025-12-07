@@ -12,7 +12,7 @@ interface User {
 export const useAuthStore = defineStore('auth', {
     state: () => ({
         user: null as User | null,
-        token: null as string | null,
+        token: useCookie('auth_token').value || null,
     }),
     getters: {
         isAuthenticated: (state) => !!state.token,
@@ -41,11 +41,9 @@ export const useAuthStore = defineStore('auth', {
             if (!this.token) return
 
             try {
-                const { data, error } = await useApi<User>('/users/me')
-                if (data.value) {
-                    this.setUser(data.value)
-                } else if (error.value) {
-                    this.logout()
+                const data = await $api<User>('/users/me')
+                if (data) {
+                    this.setUser(data)
                 }
             } catch (e) {
                 this.logout()

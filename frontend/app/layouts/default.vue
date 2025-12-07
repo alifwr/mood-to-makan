@@ -19,12 +19,41 @@
         </div>
 
         <div class="flex items-center space-x-4">
-          <NuxtLink to="/auth/login/client" class="text-sm font-medium px-4 py-2 rounded-full hover:bg-nature-100 transition-colors">
-            Masuk Sini
-          </NuxtLink>
-          <NuxtLink to="/auth/login/umkm" class="text-sm font-medium px-4 py-2 bg-nature-800 text-nature-50 rounded-full hover:bg-nature-700 transition-colors shadow-lg hover:shadow-xl">
-            Login Juragan
-          </NuxtLink>
+          <template v-if="authStore.isAuthenticated">
+            <div class="flex items-center gap-4">
+              <div class="flex flex-col items-end">
+                <span class="text-sm font-bold text-nature-800">
+                  {{ authStore.user?.full_name || 'Pengguna' }}
+                </span>
+                <span class="text-xs text-nature-500 capitalize">
+                  {{ authStore.user?.role || 'Guest' }}
+                </span>
+              </div>
+              
+              <NuxtLink 
+                v-if="authStore.isUmkm" 
+                to="/umkm" 
+                class="text-sm font-medium px-4 py-2 bg-leaf-600 text-white rounded-full hover:bg-leaf-500 transition-colors"
+              >
+                Dashboard
+              </NuxtLink>
+
+              <button 
+                @click="authStore.logout" 
+                class="text-sm font-medium px-4 py-2 border border-nature-200 text-nature-600 rounded-full hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+              >
+                Keluar
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <NuxtLink to="/auth/login/client" class="text-sm font-medium px-4 py-2 rounded-full hover:bg-nature-100 transition-colors">
+              Masuk Sini
+            </NuxtLink>
+            <NuxtLink to="/auth/login/umkm" class="text-sm font-medium px-4 py-2 bg-nature-800 text-nature-50 rounded-full hover:bg-nature-700 transition-colors shadow-lg hover:shadow-xl">
+              Login UMKM
+            </NuxtLink>
+          </template>
         </div>
       </div>
     </nav>
@@ -42,7 +71,7 @@
         <div class="col-span-1 md:col-span-2">
           <h3 class="text-2xl font-serif font-bold mb-4 text-nature-800">Mood2Makan</h3>
           <p class="text-nature-600 max-w-sm">
-            Temukan spot makan tersembunyi dan rasa otentik. Hubungkan pecinta kuliner dengan juragan lokal.
+            Platform eksplorasi kuliner berbasis AI. Hubungkan mood makanmu dengan UMKM terbaik di kota.
           </p>
         </div>
         <div>
@@ -50,7 +79,7 @@
           <ul class="space-y-2 text-sm text-nature-600">
             <li><NuxtLink to="/explore" class="hover:text-leaf-600">Cekidot</NuxtLink></li>
             <li><NuxtLink to="/about" class="hover:text-leaf-600">Tentang Kita</NuxtLink></li>
-            <li><NuxtLink to="/auth/login/umkm" class="hover:text-leaf-600">Buat Juragan</NuxtLink></li>
+            <li><NuxtLink to="/auth/login/umkm" class="hover:text-leaf-600">Gabung UMKM</NuxtLink></li>
           </ul>
         </div>
         <div>
@@ -69,7 +98,10 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+
 const isScrolled = ref(false)
+const authStore = useAuthStore()
 
 onMounted(() => {
   window.addEventListener('scroll', () => {

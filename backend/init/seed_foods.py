@@ -27,6 +27,7 @@ SAMPLE_FOODS = [
         "protein": 15,
         "carbs": 65,
         "fat": 12,
+        "price": 25000,
     },
     {
         "name": "Rendang",
@@ -40,6 +41,7 @@ SAMPLE_FOODS = [
         "protein": 35,
         "carbs": 15,
         "fat": 38,
+        "price": 45000,
     },
     {
         "name": "Sate Ayam",
@@ -53,6 +55,7 @@ SAMPLE_FOODS = [
         "protein": 28,
         "carbs": 20,
         "fat": 18,
+        "price": 30000,
     },
     {
         "name": "Gado-gado",
@@ -66,6 +69,7 @@ SAMPLE_FOODS = [
         "protein": 18,
         "carbs": 35,
         "fat": 14,
+        "price": 20000,
     },
     {
         "name": "Mie Goreng",
@@ -79,6 +83,7 @@ SAMPLE_FOODS = [
         "protein": 16,
         "carbs": 58,
         "fat": 14,
+        "price": 22000,
     },
     
     # Indonesian Snacks
@@ -94,6 +99,7 @@ SAMPLE_FOODS = [
         "protein": 3,
         "carbs": 32,
         "fat": 6,
+        "price": 15000,
     },
     {
         "name": "Martabak Manis",
@@ -107,6 +113,7 @@ SAMPLE_FOODS = [
         "protein": 12,
         "carbs": 68,
         "fat": 22,
+        "price": 35000,
     },
     {
         "name": "Keripik Tempe",
@@ -120,6 +127,7 @@ SAMPLE_FOODS = [
         "protein": 8,
         "carbs": 15,
         "fat": 8,
+        "price": 10000,
     },
     
     # Indonesian Drinks
@@ -135,6 +143,7 @@ SAMPLE_FOODS = [
         "protein": 4,
         "carbs": 45,
         "fat": 12,
+        "price": 18000,
     },
     {
         "name": "Es Cendol",
@@ -148,6 +157,7 @@ SAMPLE_FOODS = [
         "protein": 2,
         "carbs": 42,
         "fat": 8,
+        "price": 15000,
     },
     {
         "name": "Teh Tarik",
@@ -161,6 +171,7 @@ SAMPLE_FOODS = [
         "protein": 4,
         "carbs": 28,
         "fat": 6,
+        "price": 12000,
     },
     
     # Indonesian Desserts
@@ -176,6 +187,7 @@ SAMPLE_FOODS = [
         "protein": 2,
         "carbs": 32,
         "fat": 3,
+        "price": 10000,
     },
     {
         "name": "Es Krim Kopyor",
@@ -189,6 +201,7 @@ SAMPLE_FOODS = [
         "protein": 3,
         "carbs": 35,
         "fat": 11,
+        "price": 25000,
     },
     
     # International Foods
@@ -204,6 +217,7 @@ SAMPLE_FOODS = [
         "protein": 18,
         "carbs": 15,
         "fat": 6,
+        "price": 30000,
     },
     {
         "name": "Chocolate Cake",
@@ -217,6 +231,7 @@ SAMPLE_FOODS = [
         "protein": 6,
         "carbs": 58,
         "fat": 24,
+        "price": 35000,
     },
     {
         "name": "Caesar Salad",
@@ -230,6 +245,7 @@ SAMPLE_FOODS = [
         "protein": 12,
         "carbs": 18,
         "fat": 18,
+        "price": 40000,
     },
     {
         "name": "Iced Coffee",
@@ -243,6 +259,7 @@ SAMPLE_FOODS = [
         "protein": 2,
         "carbs": 18,
         "fat": 4,
+        "price": 25000,
     },
     {
         "name": "Spicy Ramen",
@@ -256,6 +273,7 @@ SAMPLE_FOODS = [
         "protein": 22,
         "carbs": 62,
         "fat": 16,
+        "price": 45000,
     },
     {
         "name": "Smoothie Bowl",
@@ -269,6 +287,7 @@ SAMPLE_FOODS = [
         "protein": 8,
         "carbs": 58,
         "fat": 8,
+        "price": 40000,
     },
 ]
 
@@ -305,9 +324,12 @@ def seed_foods():
                 # Generate embedding
                 embedding = ai_service.generate_food_embedding(food_data)
                 
+                # Filter out nutrition fields not in model
+                food_params = {k: v for k, v in food_data.items() if k not in ['calories', 'protein', 'carbs', 'fat']}
+
                 # Create food object
                 food = Food(
-                    **food_data,
+                    **food_params,
                     embedding=embedding
                 )
                 

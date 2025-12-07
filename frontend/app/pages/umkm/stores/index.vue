@@ -6,7 +6,7 @@ definePageMeta({
 
 const { data: stores } = await useApi<any[]>('/stores/')
 const authStore = useAuthStore()
-const myStores = computed(() => stores.value?.filter(s => s.owner_id === authStore.user?.id) || [])
+const myStores = computed(() => stores.value?.filter(s => s.umkm_id === authStore.user?.id) || [])
 </script>
 
 <template>

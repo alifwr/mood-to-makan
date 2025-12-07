@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api import (
     auth, users, stores, ai, reviews, 
-    foods, user_food_history
+    foods, user_food_history, client_badges
 )
 
 app = FastAPI(
@@ -27,6 +27,7 @@ app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
 app.include_router(reviews.router, prefix=f"{settings.API_V1_STR}/reviews", tags=["reviews"])
 app.include_router(foods.router, prefix=f"{settings.API_V1_STR}/foods", tags=["foods"])
 app.include_router(user_food_history.router, prefix=f"{settings.API_V1_STR}/users", tags=["user-food-history"])
+app.include_router(client_badges.router, prefix=f"{settings.API_V1_STR}/client-badges", tags=["client-badges"])
 
 @app.get("/")
 def root():

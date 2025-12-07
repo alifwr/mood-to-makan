@@ -24,9 +24,11 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 
     to_encode.update({"exp": expire})
 
+    secret = settings.SECRET_KEY.get_secret_value() if settings.SECRET_KEY else "insecure-secret-key-dev-only"
+    
     encoded_jwt = jwt.encode(
         to_encode,
-        settings.SECRET_KEY,
+        settings.SECRET_KEY.get_secret_value(),
         algorithm=settings.ALGORITHM
     )
     return encoded_jwt
