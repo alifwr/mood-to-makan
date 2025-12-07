@@ -231,65 +231,58 @@ def recommend_foods_by_mood(mood_description: str, db: Session,
 
 
 def get_personalized_recommendations(user_id: int, db: Session, limit: int = 10) -> List[Food]:
-    """Get personalized food recommendations based on user history"""
+    """Get personalized food recommendations based on user history using vector search"""
     try:
-        # Get user's interaction history
+        # 1. Get user's interaction history
         user_history = db.query(UserFoodHistory).filter(
             UserFoodHistory.user_id == user_id
         ).all()
         
         if not user_history:
-            # No history, return popular foods
-            return db.query(Food).limit(limit).all()
+            # No history, return random foods
+            return db.query(Food).order_by(func.random()).limit(limit).all()
         
-        # Analyze user preferences
-        liked_food_ids = [h.food_id for h in user_history if h.rating and h.rating >= 4]
+        # 2. Identify "liked" foods to build the preference profile
+        # Prefer highly rated foods (>= 4)
+        liked_history = [h for h in user_history if h.rating and h.rating >= 4]
         
-        if not liked_food_ids:
-            # No highly rated foods, use all interactions
-            liked_food_ids = [h.food_id for h in user_history]
+        # If no highly rated foods, use all interactions (implicit feedback)
+        target_history = liked_history if liked_history else user_history
+        target_food_ids = [h.food_id for h in target_history]
         
-        if not liked_food_ids:
-            # Still no foods, return random
-            return db.query(Food).limit(limit).all()
+        # 3. Fetch embeddings of target foods
+        target_foods = db.query(Food).filter(Food.id.in_(target_food_ids)).all()
+        valid_embeddings = [f.embedding for f in target_foods if f.embedding is not None]
         
-        # Get liked foods
-        liked_foods = db.query(Food).filter(Food.id.in_(liked_food_ids)).all()
+        if not valid_embeddings:
+            return db.query(Food).order_by(func.random()).limit(limit).all()
+            
+        # 4. Calculate average embedding vector (User Profile Vector)
+        vector_dim = len(valid_embeddings[0])  # type: ignore
+        avg_vector = [0.0] * vector_dim
         
-        if not liked_foods:
-            return db.query(Food).limit(limit).all()
+        for emb in valid_embeddings:
+            for i in range(vector_dim):
+                avg_vector[i] += emb[i]  # type: ignore
+                
+        avg_vector = [x / len(valid_embeddings) for x in avg_vector]
         
-        # Extract common attributes
-        all_taste_profiles = []
-        all_mood_tags = []
-        all_categories = []
+        # 5. Find similar foods using vector similarity
+        # Exclude foods the user has already interacted with
+        interacted_food_ids = [h.food_id for h in user_history]
         
-        for food in liked_foods:
-            if food.taste_profile:
-                all_taste_profiles.extend(food.taste_profile)
-            if food.mood_tags:
-                all_mood_tags.extend(food.mood_tags)
-            if food.category:
-                all_categories.append(food.category)
+        recommendations = db.query(Food).filter(
+            ~Food.id.in_(interacted_food_ids)
+        ).order_by(
+            Food.embedding.cosine_distance(avg_vector)
+        ).limit(limit).all()
         
-        # Find foods with similar attributes that user hasn't tried
-        tried_food_ids = [h.food_id for h in user_history]
+        return recommendations
         
-        # Build query for similar foods
-        similar_foods = db.query(Food).filter(
-            ~Food.id.in_(tried_food_ids)
-        )
-        
-        # Filter by common categories or taste profiles
-        if all_categories:
-            most_common_category = max(set(all_categories), key=all_categories.count)
-            similar_foods = similar_foods.filter(Food.category == most_common_category)
-        
-        return similar_foods.limit(limit).all()
     except Exception as e:
         print(f"Error in get_personalized_recommendations: {e}")
         # Fallback: return random foods
-        return db.query(Food).limit(limit).all()
+        return db.query(Food).order_by(func.random()).limit(limit).all()
 
 
 # ========== FOOD DESCRIPTION GENERATION FUNCTIONS ==========
