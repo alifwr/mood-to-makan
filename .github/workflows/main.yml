@@ -25,7 +25,8 @@ jobs:
       - name: Remove Target Directory Contents Except .env
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
-            find /root/mood2makan/backend/ -mindepth 1 ! -name ".env" -exec rm -rf {} +'
+            find /root/mood2makan/backend/ -mindepth 1 ! -name ".env" -exec rm -rf {} +
+            find /root/mood2makan/frontend/ -mindepth 1 ! -name ".env" -exec rm -rf {} +'
 
       - name: Copy directory to server
         run: |
