@@ -22,8 +22,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: mood2makan_backend
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/mood2makan
+    env_file:
+      - ./backend/.env
     ports:
       - "8007:8000"
     depends_on:
@@ -34,6 +34,12 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - mood2makan-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   frontend:
     build:
@@ -43,13 +49,11 @@ services:
     restart: always
     ports:
       - "2805:3000"
-    environment:
-      - HOST=0.0.0.0
-      - PORT=3000
-      # Override the route rule for proxying to backend in Docker network
-      - NITRO_ROUTE_RULES={"/api/**":{"proxy":"http://backend:8000/api/v1/**"}}
+    env_file:
+      - ./frontend/.env
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - mood2makan-network
 

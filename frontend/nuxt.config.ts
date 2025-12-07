@@ -5,11 +5,12 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
+    apiProxyTarget: 'http://localhost:8000/api/v1',
     public: {
       apiBase: '/api'
     }
   },
   routeRules: {
-    '/api/**': { proxy: `${process.env.API_URL || 'http://localhost:8000/api/v1'}/**` }
+    
   }
 })
