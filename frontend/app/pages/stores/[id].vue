@@ -8,12 +8,13 @@ const storeId = route.params.id
 
 const { data: store } = await useApi<any>(`/stores/${storeId}`)
 const { data: foods } = await useApi<any[]>(`/foods/?store_id=${storeId}`)
-const { data: reviews, refresh: refreshReviews } = await useApi<any[]>(`/reviews/?store_id=${storeId}`)
+const { data: reviews, refresh: refreshReviews } = await useApi<any[]>(`/reviews/store/${storeId}`)
 
 const authStore = useAuthStore()
 const newReview = ref({
   rating: 5,
-  comment: ''
+  comment: '',
+  food_id: null as number | null
 })
 const isSubmittingReview = ref(false)
 
@@ -25,18 +26,18 @@ const submitReview = async () => {
 
   isSubmittingReview.value = true
   try {
-    const { error } = await useApi('/reviews/', {
+    await $api('/reviews/', {
       method: 'POST',
       body: {
-        ...newReview.value,
-        store_id: parseInt(storeId as string)
+        rating: newReview.value.rating,
+        comment: newReview.value.comment,
+        store_id: parseInt(storeId as string),
+        food_id: newReview.value.food_id
       }
     })
 
-    if (error.value) throw new Error(error.value.message)
-
     await refreshReviews()
-    newReview.value = { rating: 5, comment: '' }
+    newReview.value = { rating: 5, comment: '', food_id: null }
   } catch (e) {
     alert('Failed to submit review: ' + e)
   } finally {
@@ -97,6 +98,16 @@ const submitReview = async () => {
         <div class="bg-nature-50 p-6 rounded-2xl border border-nature-100 mb-8">
           <h3 class="font-bold text-lg mb-4">Write a Review</h3>
           <form @submit.prevent="submitReview" class="space-y-4">
+            <div>
+              <label class="text-sm font-medium block mb-1 text-nature-700">Review for (Optional):</label>
+              <select v-model="newReview.food_id" class="w-full px-4 py-2 rounded-xl border border-nature-200 focus:ring-2 focus:ring-leaf-500 outline-none bg-white">
+                <option :value="null">Store (General)</option>
+                <option v-for="food in foods" :key="food.id" :value="food.id">
+                  {{ food.name }}
+                </option>
+              </select>
+            </div>
+
             <div class="flex items-center gap-4">
               <label class="text-sm font-medium">Rating:</label>
               <div class="flex gap-2">

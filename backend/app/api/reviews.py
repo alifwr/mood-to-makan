@@ -92,3 +92,34 @@ def read_reviews_by_user(
     )
 
     return reviews
+
+@router.get("/umkm/me", response_model=List[ReviewSchema])
+def read_reviews_for_umkm(
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get all reviews for stores owned by the current UMKM user.
+    """
+    if current_user.role != "umkm":
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
+    # Find stores owned by user
+    stores = db.query(Store).filter(Store.umkm_id == current_user.id).all()
+    store_ids = [s.id for s in stores]
+    
+    if not store_ids:
+        return []
+
+    reviews = (
+        db.query(Review)
+        .filter(Review.store_id.in_(store_ids))
+        .order_by(Review.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    
+    return reviews

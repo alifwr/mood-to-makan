@@ -4,7 +4,12 @@ from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 from app.core.database import Base
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.store import Store
+    from app.models.food import Food
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -12,7 +17,7 @@ class Review(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
     store_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("stores.id"), nullable=True)
-    food_id: Mapped[int] = mapped_column(Integer, ForeignKey("foods.id"), nullable=False)
+    food_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("foods.id"), nullable=True)
     rating: Mapped[float] = mapped_column(Float, nullable=False) # 0-5
     comment: Mapped[str] = mapped_column(String, nullable=False)
     embedding: Mapped[Vector] = mapped_column(Vector(1536), nullable=False)  # For semantic analysis
